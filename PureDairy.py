@@ -757,7 +757,7 @@ else:
     if page == "Dashboard":
 
 
-        st.title("📊 Dairy Farm Dashboard")
+        st.title("📊 Pure Dairy Farm Dashboard")
 
         # ==================================================
         # 🎨 GLOBAL STYLES (READABLE + PROFESSIONAL)
