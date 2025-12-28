@@ -3098,6 +3098,7 @@ else:
                         }
                     )
                     st.success("Cow profile updated ✅")
+                    st.cache_data.clear()
                     st.session_state.edit_cow_id = None
                     st.query_params.clear()
                     st.rerun()
@@ -3313,6 +3314,7 @@ else:
                 ])
                 st.success("Customer added")
                 st.session_state.show_add_form = False
+                st.cache_data.clear()
                 st.query_params.clear()
                 st.rerun()
 
@@ -3391,6 +3393,7 @@ else:
                 )
                 st.success("✅ Customer updated successfully")
                 st.session_state.edit_customer_id = None
+                st.cache_data.clear()
                 st.query_params.clear()
                 st.rerun()
 
@@ -3700,6 +3703,7 @@ else:
                 append_bitran_rows(rows)
 
                 st.success("✅ Milk Bitran saved successfully")
+                st.cache_data.clear()
                 st.session_state.show_form = None
                 st.session_state.pop("locked_bitran_date", None)
                 st.session_state.pop("locked_milk_qty", None)
@@ -4835,7 +4839,7 @@ else:
                         row_idx, get_col_index(auth_df, "phone"), phone
                     )
 
-                    load_auth_data.clear()
+                    st.cache_data.clear()
                     st.success("✅ Contact details updated")
                     st.session_state.show_edit_info = False
                     st.rerun()
@@ -4874,7 +4878,7 @@ else:
                         hash_password(new_pass),
                     )
 
-                    load_auth_data.clear()
+                    st.cache_data.clear()
                     st.success("✅ Password updated successfully")
                     st.session_state.show_change_password = False
                     st.query_params.clear()
@@ -5168,7 +5172,7 @@ else:
                     AUTH_SHEET.update_cell(row_idx, get_col_index(auth_df, "accesslevel"), access)
                     AUTH_SHEET.update_cell(row_idx, get_col_index(auth_df, "status"), status)
 
-                    load_auth_data.clear()
+                    st.cache_data.clear()
 
                     st.success("✅ User updated successfully")
 
