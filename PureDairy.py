@@ -1011,8 +1011,64 @@ else:
                             """,
                             unsafe_allow_html=True
                         )
+        # ===============================
+        # ⏳ PENDING MILKING (VIEW ONLY)
+        # ===============================
 
-            
+        df_milk = load_milking_data()
+
+        pending_milking = []
+
+        if not df_milk.empty:
+            df_milk["Date"] = pd.to_datetime(df_milk["Date"], errors="coerce")
+
+            day_shift = (
+                df_milk.groupby(["Date", "Shift"])
+                .size()
+                .unstack(fill_value=0)
+            )
+
+            for date, row in day_shift.iterrows():
+                if row.get("Morning", 0) == 0:
+                    pending_milking.append((date.date(), "Morning"))
+                if row.get("Evening", 0) == 0:
+                    pending_milking.append((date.date(), "Evening"))
+
+        # ---- UI ----
+        if pending_milking:
+            st.subheader("⏳ Pending Milking")
+
+            for d, s in pending_milking:
+                st.markdown(
+                    f"""
+                    <div class="mini-card">
+                        🐄 {d} • {s}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        # ===============================
+        # 💰 PENDING PAYMENTS (VIEW ONLY)
+        # ===============================
+
+        pending_bills = bills_df[bills_df["BalanceAmount"] > 0]
+
+        if not pending_bills.empty:
+            st.subheader("💰 Pending Payments")
+
+            for _, r in pending_bills.iterrows():
+                short_id = f"{r['CustomerID'][:2]}**{r['CustomerID'][-4:]}"
+                st.markdown(
+                    f"""
+                    <div class="mini-card">
+                        👤 {r['CustomerName']} ({short_id})<br>
+                        💵 ₹ {r['BalanceAmount']:,.0f}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+        
 
 
 
