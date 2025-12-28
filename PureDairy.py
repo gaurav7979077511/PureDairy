@@ -1067,7 +1067,7 @@ else:
             cols = st.columns(4)
             for i,(_, r) in enumerate(pending_bills.iterrows()):
                 short_id = f"{r['CustomerID'][:2]}**{r['CustomerID'][-4:]}"
-                with col[i % 4]:
+                with cols[i % 4]:
                     st.markdown(
                         f"""
                         <div class="mini-card">
