@@ -975,39 +975,40 @@ else:
             st.markdown('<div class="section">', unsafe_allow_html=True)
             st.subheader("📍 Latest Operations")
 
-            col1, col2 = st.columns(2)
+            # ---------------- LATEST MILKING ----------------
+            st.markdown("**🐄 Milking – Last 2 Days**")
 
-            with col1:
-                st.markdown("**🐄 Milking (Last 2)**")
-                if milking_df.empty:
-                    st.info("No records")
-                else:
-                    m = milking_df.sort_values("Timestamp", ascending=False).head(2)
-                    for _, r in m.iterrows():
-                        st.markdown(
-                            f'<div class="mini-card">'
-                            f'{r["Shift"]} • {r["MilkQuantity"]} L'
-                            f'<span class="meta">{r["Date"]}</span>'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
+            if milking_df.empty:
+                st.info("No milking records found.")
+            else:
+                milking_df["Date"] = pd.to_datetime(milking_df["Date"])
+                milking_df["MilkQuantity"] = pd.to_numeric(
+                    milking_df["MilkQuantity"], errors="coerce"
+                ).fillna(0)
 
-            with col2:
-                st.markdown("**🚚 Milk Distribution (Last 2)**")
-                if bitran_df.empty:
-                    st.info("No records")
-                else:
-                    b = bitran_df.sort_values("Timestamp", ascending=False).head(2)
-                    for _, r in b.iterrows():
-                        st.markdown(
-                            f'<div class="mini-card">'
-                            f'{r["Shift"]} • {r["MilkDelivered"]} L'
-                            f'<span class="meta">{r["Date"]}</span>'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
+                # Take last 2 unique days
+                last_days = (
+                    milking_df.sort_values("Date", ascending=False)
+                    .drop_duplicates("Date")
+                    .head(2)["Date"]
+                    .tolist()
+                )
 
-            st.markdown('</div>', unsafe_allow_html=True)
+                recent = milking_df[
+                    milking_df["Date"].isin(last_days)
+                ].sort_values(["Date", "Shift"], ascending=[False, True])
+
+                for _, r in recent.iterrows():
+                    st.markdown(
+                        f"""
+                        <div class="mini-card">
+                            {r['Shift']} • {r['MilkQuantity']:.1f} L
+                            <span class="meta">{r['Date'].date()}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            
 
 
 
