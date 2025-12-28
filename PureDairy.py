@@ -3715,9 +3715,6 @@ else:
         # ==================================================
 
         customers_df = load_customers()
-        customers_df = customers_df[
-            customers_df["Status"].str.lower() == "active"
-        ]
 
         if not customers_df.empty and not df_bitran.empty:
 
