@@ -3687,7 +3687,12 @@ else:
         for _, row in milk_grp.iterrows():
             date = row["Date"]
             shift = row["Shift"]
-            milk_total = row["MilkQuantity"]
+
+            milk_total = float(row["MilkQuantity"] or 0)
+
+            # 🚫 SKIP if no milk produced
+            if milk_total <= 0:
+                continue
 
             delivered = bitran_grp[
                 (bitran_grp["Date"] == date) &
@@ -3700,6 +3705,7 @@ else:
                     "Shift": shift,
                     "MilkTotal": milk_total
                 })
+
         
         # ===============================
         # ⏳ PENDING MILK BITRAN (RESPONSIVE)
