@@ -1019,24 +1019,28 @@ else:
 
         pending_milking = []
 
-        if not df_milk.empty:
+        if not df_milk.empty and {"Date", "Shift"}.issubset(df_milk.columns):
+
             df_milk["Date"] = pd.to_datetime(df_milk["Date"], errors="coerce")
 
             day_shift = (
-                df_milk.groupby(["Date", "Shift"])
+                df_milk
+                .groupby(["Date", "Shift"])
                 .size()
                 .unstack(fill_value=0)
             )
-            
+
             for date, row in day_shift.iterrows():
                 if row.get("Morning", 0) == 0:
                     pending_milking.append((date.date(), "Morning"))
                 if row.get("Evening", 0) == 0:
                     pending_milking.append((date.date(), "Evening"))
 
-        # ---- UI ----
+        # ---- UI (ONLY IF EXISTS) ----
         if pending_milking:
+
             st.subheader("⏳ Pending Milking")
+
             cols = st.columns(5)
 
             for i, (d, s) in enumerate(pending_milking):
@@ -1050,22 +1054,27 @@ else:
                         unsafe_allow_html=True
                     )
 
-
         # ===============================
         # 💰 PENDING PAYMENTS (VIEW ONLY)
         # ===============================
-        # --- FIX numeric columns ---
+
+        # --- FIX numeric columns (SAFE) ---
         for col in ["BillAmount", "PaidAmount", "BalanceAmount"]:
             if col in bills_df.columns:
-                bills_df[col] = pd.to_numeric(bills_df[col], errors="coerce").fillna(0)
-
+                bills_df[col] = pd.to_numeric(
+                    bills_df[col], errors="coerce"
+                ).fillna(0)
 
         pending_bills = bills_df[bills_df["BalanceAmount"] > 0]
 
+        # ---- UI (ONLY IF EXISTS) ----
         if not pending_bills.empty:
+
             st.subheader("💰 Pending Payments")
+
             cols = st.columns(4)
-            for i,(_, r) in enumerate(pending_bills.iterrows()):
+
+            for i, (_, r) in enumerate(pending_bills.iterrows()):
                 short_id = f"{r['CustomerID'][:2]}**{r['CustomerID'][-4:]}"
                 with cols[i % 4]:
                     st.markdown(
@@ -1077,7 +1086,7 @@ else:
                         """,
                         unsafe_allow_html=True
                     )
-        
+
 
 
 
