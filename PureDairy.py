@@ -999,17 +999,19 @@ else:
                 ].sort_values(["Date", "Shift"], ascending=[False, True])
 
                 cols = st.columns(2)
-                for _, r in recent.iterrows():
+
+                for i, (_, r) in enumerate(recent.iterrows()):
                     with cols[i % 2]:
                         st.markdown(
                             f"""
                             <div class="mini-card">
-                                {r['Shift']} • {r['MilkQuantity']:.1f} L
+                                {r['Shift']} • {float(r['MilkQuantity']):.1f} L
                                 <span class="meta">{r['Date'].date()}</span>
                             </div>
                             """,
                             unsafe_allow_html=True
                         )
+
             
 
 
