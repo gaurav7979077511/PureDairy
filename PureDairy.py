@@ -1027,7 +1027,7 @@ else:
                 .size()
                 .unstack(fill_value=0)
             )
-
+            
             for date, row in day_shift.iterrows():
                 if row.get("Morning", 0) == 0:
                     pending_milking.append((date.date(), "Morning"))
@@ -1037,20 +1037,28 @@ else:
         # ---- UI ----
         if pending_milking:
             st.subheader("⏳ Pending Milking")
+            cols = st.columns(6)
 
-            for d, s in pending_milking:
-                st.markdown(
-                    f"""
-                    <div class="mini-card">
-                        🐄 {d} • {s}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            for i, (d, s) in enumerate(pending_milking):
+                with cols[i % 6]:
+                    st.markdown(
+                        f"""
+                        <div class="mini-card">
+                            🐄 {d} • {s}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
 
         # ===============================
         # 💰 PENDING PAYMENTS (VIEW ONLY)
         # ===============================
+        # --- FIX numeric columns ---
+        for col in ["BillAmount", "PaidAmount", "BalanceAmount"]:
+            if col in bills_df.columns:
+                bills_df[col] = pd.to_numeric(bills_df[col], errors="coerce").fillna(0)
+
 
         pending_bills = bills_df[bills_df["BalanceAmount"] > 0]
 
