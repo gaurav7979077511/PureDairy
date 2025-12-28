@@ -2783,7 +2783,7 @@ else:
                 color:white;
                 padding:14px;
                 border-radius:16px;
-                height:235px;
+                height:240px;
                 box-shadow:0 6px 18px rgba(0,0,0,0.25);
                 display:flex;
                 flex-direction:column;
