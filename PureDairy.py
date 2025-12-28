@@ -2668,7 +2668,7 @@ else:
 
                     if st.button("✅ Generate Bill"):
                         ws = open_billing_sheet()
-                        daily_pattern_str = ",".join(map(str, daily_pattern))
+                        daily_pattern_str = ",".join(map(str, missing))
                         ws.append_row(
                             [
                                 f"BILL{dt.datetime.now().strftime('%Y%m%d%H%M%S%f')}",
