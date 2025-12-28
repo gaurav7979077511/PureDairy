@@ -1255,7 +1255,8 @@ else:
                 cid = cow["CowID"]
                 tag = cow["TagNumber"]
                 last_upd = last_update_map.get(cid, "-")
-                avg_val = float(month_avg.get(cid, 0))
+                avg_series = month_avg.loc[month_avg.index == cid]
+                avg_val = float(avg_series.iloc[0]) if not avg_series.empty else 0.0
                 last_day_val = float(last_day_map.get(cid, 0))
 
                 is_below_avg = last_day_val < avg_val
