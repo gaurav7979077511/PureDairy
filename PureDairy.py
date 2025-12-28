@@ -1356,11 +1356,6 @@ else:
                 return 0.0
 
 
-        # Active + Milking cows
-        cows_df = cows_df[
-            (cows_df["Status"] == "Active") &
-            (cows_df["MilkingStatus"] == "Milking")
-        ]
 
         if cows_df.empty:
             st.info("No active milking cows.")
@@ -1393,6 +1388,24 @@ else:
                 .groupby("CowID")
                 .mean()
             )
+            # ---------------- SHOW ONLY COWS WITH MILK THIS MONTH ----------------
+            if not month_df.empty:
+                valid_cows = set(
+                    month_total[month_total > 0].index.astype(str)
+                )
+            else:
+                valid_cows = set()
+
+            # Filter cows based on data, NOT status
+            cows_df = cows_df[cows_df["CowID"].isin(valid_cows)]
+            cows_df = cows_df.merge(
+                month_total.rename("MonthMilk"),
+                left_on="CowID",
+                right_index=True,
+                how="left"
+            ).sort_values("MonthMilk", ascending=False)
+
+
 
             last_day_map = {}
 
