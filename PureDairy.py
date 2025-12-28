@@ -1000,7 +1000,7 @@ else:
 
                 cols = st.columns(2)
                 for _, r in recent.iterrows():
-                    with cols[i%2]:
+                    with cols[i % 2]:
                         st.markdown(
                             f"""
                             <div class="mini-card">
