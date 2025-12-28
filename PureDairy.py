@@ -1189,33 +1189,73 @@ else:
         st.divider()
 
 
-        # ================== STATE ==================
+        # ================== code for Dynamic Button of milking ==================
         if "show_milking_form" not in st.session_state:
             st.session_state.show_milking_form = None
 
-        # ================== SHIFT BUTTONS ==================
-        c1, c2 = st.columns(2)
-    
-        with c1:
-            if st.button("🌅 Morning Milking", use_container_width=True):
-                st.session_state.show_milking_form = "Morning"
-    
-        with c2:
-            if st.button("🌃 Evening Milking", use_container_width=True):
-                st.session_state.show_milking_form = "Evening"
+        if "locked_milking_date" not in st.session_state:
+            st.session_state.locked_milking_date = None
 
+        df_milk = load_milking_data()
+
+        pending_milking = []
+
+        if not df_milk.empty:
+            df_milk["Date"] = pd.to_datetime(df_milk["Date"], errors="coerce")
+
+            start_date = df_milk["Date"].min().date()
+            today = dt.date.today()
+
+            # Create full date range (NO FUTURE)
+            all_days = pd.date_range(start=start_date, end=today, freq="D")
+
+            done = (
+                df_milk.groupby(["Date", "Shift"])
+                .size()
+                .unstack(fill_value=0)
+            )
+
+            for d in all_days:
+                d = d.date()
+
+                for shift in ["Morning", "Evening"]:
+                    if d not in done.index or done.loc[d].get(shift, 0) == 0:
+                        pending_milking.append((d, shift))
+
+
+
+        if pending_milking:
+            st.subheader("⏳ Pending Milking")
+
+            MAX_COLS = 4
+            for i in range(0, len(pending_milking), MAX_COLS):
+
+                row = pending_milking[i:i + MAX_COLS]
+                cols = st.columns(len(row))
+
+                for col, (d, shift) in zip(cols, row):
+                    with col:
+                        if st.button(
+                            f"🐄 {d} • {shift}",
+                            use_container_width=True
+                        ):
+                            st.session_state.show_milking_form = shift
+                            st.session_state.locked_milking_date = d
+                            st.rerun()
 
         
     
         
         # ================== ENTRY FORM ==================
         if st.session_state.show_milking_form:
-    
+
             shift = st.session_state.show_milking_form
+            date = st.session_state.locked_milking_date or dt.date.today()
+
             st.divider()
             st.subheader(f"📝 {shift} Milking Entry")
-    
-            date = st.date_input("Date", value=dt.date.today())
+            st.caption(f"📅 Date: {date}")
+
     
             # 🔹 Load only Active + Milking cows
             cows_df = load_cows()
