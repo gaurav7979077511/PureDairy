@@ -1189,38 +1189,45 @@ else:
         st.divider()
 
 
-        # ================== code for Dynamic Button of milking ==================
+        # ================== code for Dynamic Button of Milking ==================
         if "show_milking_form" not in st.session_state:
             st.session_state.show_milking_form = None
 
         if "locked_milking_date" not in st.session_state:
             st.session_state.locked_milking_date = None
 
-        df_milk = load_milking_data()
+        # ===============================
+        # ⏳ PENDING MILKING (VIEW ONLY)
+        # ===============================
 
+        df_milk = load_milking_data()
         pending_milking = []
 
-        if not df_milk.empty:
+        if not df_milk.empty and {"Date", "Shift"}.issubset(df_milk.columns):
+
             df_milk["Date"] = pd.to_datetime(df_milk["Date"], errors="coerce")
 
             start_date = df_milk["Date"].min().date()
-            today = dt.date.today()
+            today = dt.date.today()   # ✅ HARD STOP AT TODAY
 
-            # Create full date range (NO FUTURE)
-            all_days = pd.date_range(start=start_date, end=today, freq="D")
+            # All valid dates from first entry → today
+            all_dates = pd.date_range(start=start_date, end=today, freq="D")
 
+            # Existing entries
             done = (
-                df_milk.groupby(["Date", "Shift"])
+                df_milk
+                .groupby(["Date", "Shift"])
                 .size()
                 .unstack(fill_value=0)
             )
 
-            for d in all_days:
+            for d in all_dates:
                 d = d.date()
 
                 for shift in ["Morning", "Evening"]:
                     if d not in done.index or done.loc[d].get(shift, 0) == 0:
                         pending_milking.append((d, shift))
+
 
 
 
