@@ -1340,6 +1340,15 @@ else:
         st.divider()
         st.subheader("🐄 Cow-wise Milking Summary")
 
+        cows_df = load_cows()
+        df_milk["CowID"] = df_milk["CowID"].astype(str).str.strip()
+        cows_df["CowID"] = cows_df["CowID"].astype(str).str.strip()
+
+        df_milk["MilkQuantity"] = pd.to_numeric(
+            df_milk["MilkQuantity"], errors="coerce"
+        ).fillna(0)
+
+
         def safe_float(val):
             try:
                 return float(val)
@@ -1348,7 +1357,6 @@ else:
 
 
         # Active + Milking cows
-        cows_df = load_cows()
         cows_df = cows_df[
             (cows_df["Status"] == "Active") &
             (cows_df["MilkingStatus"] == "Milking")
@@ -1358,8 +1366,25 @@ else:
             st.info("No active milking cows.")
         else:
             # ---------- Aggregations ----------
-            lifetime = df_milk.groupby("CowID")["MilkQuantity"].sum()
-            month_total = month_df.groupby("CowID")["MilkQuantity"].sum()
+            lifetime = (
+                df_milk
+                .groupby("CowID", as_index=True)["MilkQuantity"]
+                .sum()
+            )
+
+            if not month_df.empty:
+                month_total = month_df.groupby("CowID")["MilkQuantity"].sum()
+                month_avg = (
+                    month_df
+                    .groupby(["CowID", "Date"])["MilkQuantity"]
+                    .sum()
+                    .groupby("CowID")
+                    .mean()
+                )
+            else:
+                month_total = {}
+                month_avg = {}
+
 
             month_avg = (
                 month_df
@@ -1370,13 +1395,13 @@ else:
             )
 
             last_day_map = {}
-            if last_complete_date:
-                last_day_map = (
-                    df_milk[df_milk["Date"] == last_complete_date]
-                    .groupby("CowID")["MilkQuantity"]
-                    .sum()
-                    .to_dict()
+
+            for cid, g in df_milk.groupby("CowID"):
+                last_date = g["Date"].max()
+                last_day_map[cid] = (
+                    g[g["Date"] == last_date]["MilkQuantity"].sum()
                 )
+
 
             last_update_map = (
                 df_milk.groupby("CowID")["Timestamp"]
@@ -1393,14 +1418,11 @@ else:
                 tag = cow["TagNumber"]
 
                 last_upd = last_update_map.get(cid, "-")
-                avg_val = float(month_avg.get(cid, 0.0))
-                last_day_val = float(last_day_map.get(cid, 0.0))
-
-                is_below_avg = last_day_val < avg_val
                 life_val = safe_float(lifetime.get(cid))
                 month_val = safe_float(month_total.get(cid))
                 avg_val = safe_float(month_avg.get(cid))
                 last_day_val = safe_float(last_day_map.get(cid))
+                is_below_avg = last_day_val < avg_val
 
 
 
