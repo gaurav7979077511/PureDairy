@@ -1262,8 +1262,8 @@ else:
             date = st.session_state.locked_milking_date or dt.date.today()
 
             st.divider()
-            st.subheader(f"📝 {shift} Milking Entry")
-            st.caption(f"📅 Date: {date}")
+            st.subheader(f"📅 Date: {date}")
+            st.caption(f"📝 {shift} Milking Entry")
 
     
             # 🔹 Load only Active + Milking cows
@@ -1340,6 +1340,13 @@ else:
         st.divider()
         st.subheader("🐄 Cow-wise Milking Summary")
 
+        def safe_float(val):
+            try:
+                return float(val)
+            except (TypeError, ValueError):
+                return 0.0
+
+
         # Active + Milking cows
         cows_df = load_cows()
         cows_df = cows_df[
@@ -1390,6 +1397,11 @@ else:
                 last_day_val = float(last_day_map.get(cid, 0.0))
 
                 is_below_avg = last_day_val < avg_val
+                life_val = safe_float(lifetime.get(cid))
+                month_val = safe_float(month_total.get(cid))
+                avg_val = safe_float(month_avg.get(cid))
+                last_day_val = safe_float(last_day_map.get(cid))
+
 
 
                 gradient = (
@@ -1436,11 +1448,11 @@ else:
                         font-size:11px;
                         line-height:1.35;
                     ">
-                        <div>Total :<b>{lifetime.get(cid,0):.1f} L</b></div>
-                        <div>Avg/day :<b>{month_avg.get(cid,0):.1f} L</b></div>
+                        <div>Total : <b>{life_val:.1f} L</b></div>
+                        <div>Avg/day : <b>{avg_val:.1f} L</b></div>
 
-                        <div>Month :<b>{month_total.get(cid,0):.1f} L</b></div>
-                        <div>Last day :<b>{last_day_map.get(cid,0):.1f} L</b></div>
+                        <div>Month : <b>{month_val:.1f} L</b></div>
+                        <div>Last day : <b>{last_day_val:.1f} L</b></div>
                     </div>
 
                 </div>
