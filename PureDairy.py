@@ -1225,7 +1225,7 @@ else:
             # ---------- Aggregations ----------
             lifetime = df_milk.groupby("CowID")["MilkQuantity"].sum()
             month_total = month_df.groupby("CowID")["MilkQuantity"].sum()
-            month_avg = month_df.groupby("CowID")["MilkQuantity"].mean()
+            month_avg = month_df.groupby(["CowID", "Date"])["MilkQuantity"].mean()
 
             last_day_map = {}
             if last_complete_date:
@@ -2156,10 +2156,6 @@ else:
                         st.error("❌ Amount must be greater than 0")
                         st.stop()
 
-                    if received_amt > float(bill["BalanceAmount"]):
-                        st.error("❌ Amount cannot exceed pending balance")
-                        st.stop()
-
 
                     now = dt.datetime.now()
 
@@ -2183,6 +2179,8 @@ else:
                     # ---- UPDATE BILL ----
                     new_paid = bill["PaidAmount"] + received_amt
                     new_balance = bill["BillAmount"] - new_paid
+                    if new_balance<0:
+                        new_balance=0
                     if new_balance == 0:
                         status = "Paid"
                         paid_date = now.strftime("%Y-%m-%d")
