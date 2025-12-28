@@ -976,7 +976,7 @@ else:
             st.subheader("📍 Latest Operations")
 
             # ---------------- LATEST MILKING ----------------
-            st.markdown("**🐄 Milking – Last 2 Days**")
+            st.markdown("**🐄 Milking (Last Day)**")
 
             if milking_df.empty:
                 st.info("No milking records found.")
@@ -990,7 +990,7 @@ else:
                 last_days = (
                     milking_df.sort_values("Date", ascending=False)
                     .drop_duplicates("Date")
-                    .head(2)["Date"]
+                    .head(1)["Date"]
                     .tolist()
                 )
 
@@ -998,16 +998,18 @@ else:
                     milking_df["Date"].isin(last_days)
                 ].sort_values(["Date", "Shift"], ascending=[False, True])
 
+                cols = st.columns(2)
                 for _, r in recent.iterrows():
-                    st.markdown(
-                        f"""
-                        <div class="mini-card">
-                            {r['Shift']} • {r['MilkQuantity']:.1f} L
-                            <span class="meta">{r['Date'].date()}</span>
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    with cols[i%2]:
+                        st.markdown(
+                            f"""
+                            <div class="mini-card">
+                                {r['Shift']} • {r['MilkQuantity']:.1f} L
+                                <span class="meta">{r['Date'].date()}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
             
 
 
