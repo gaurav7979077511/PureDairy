@@ -1230,7 +1230,14 @@ else:
             # ---------- Aggregations ----------
             lifetime = df_milk.groupby("CowID")["MilkQuantity"].sum()
             month_total = month_df.groupby("CowID")["MilkQuantity"].sum()
-            month_avg = month_df.groupby(["CowID", "Date"])["MilkQuantity"].mean()
+
+            month_avg = (
+                month_df
+                .groupby(["CowID", "Date"])["MilkQuantity"]
+                .sum()
+                .groupby("CowID")
+                .mean()
+            )
 
             last_day_map = {}
             if last_complete_date:
@@ -1248,18 +1255,19 @@ else:
                 .to_dict()
             )
 
-            cols = st.columns(4)  # compact grid
+            cols = st.columns(4)
             i = 0
 
             for _, cow in cows_df.iterrows():
                 cid = cow["CowID"]
                 tag = cow["TagNumber"]
+
                 last_upd = last_update_map.get(cid, "-")
-                avg_series = month_avg.loc[month_avg.index == cid]
-                avg_val = float(avg_series.iloc[0]) if not avg_series.empty else 0.0
-                last_day_val = float(last_day_map.get(cid, 0))
+                avg_val = float(month_avg.get(cid, 0.0))
+                last_day_val = float(last_day_map.get(cid, 0.0))
 
                 is_below_avg = last_day_val < avg_val
+
 
                 gradient = (
                     "linear-gradient(135deg,#92400e,#78350f)"  # warning
