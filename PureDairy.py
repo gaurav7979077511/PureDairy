@@ -3714,13 +3714,23 @@ else:
             for i in range(0, len(pending_tasks), MAX_COLS):
 
                 row_tasks = pending_tasks[i:i + MAX_COLS]
+
+                # 👉 FILTER OUT ZERO / INVALID QUANTITY TASKS
+                row_tasks = [
+                    t for t in row_tasks
+                    if float(t.get("MilkTotal") or 0) > 0
+                ]
+
+                if not row_tasks:
+                    continue  # nothing to show in this row
+
                 cols = st.columns(len(row_tasks))  # dynamic width
 
                 for col, task in zip(cols, row_tasks):
 
                     date = task["Date"]
                     shift = task["Shift"]
-                    qty = float(task["MilkTotal"] or 0)
+                    qty = float(task["MilkTotal"])
 
                     btn_label = f"🧾 {date} • {shift} • {qty:.1f} L"
 
@@ -3730,6 +3740,7 @@ else:
                             st.session_state.locked_bitran_date = date
                             st.session_state.locked_milk_qty = qty
                             st.rerun()
+
 
 
 
