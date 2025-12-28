@@ -2484,7 +2484,7 @@ else:
 
                 month = st.selectbox(
                     "Select Month",
-                    pd.date_range(end=today, periods=12, freq="M").strftime("%Y-%m")
+                    pd.date_range(end=today, periods=3, freq="M").strftime("%Y-%m")
                 )
 
                 y, m = map(int, month.split("-"))
@@ -2497,12 +2497,12 @@ else:
                 preview = []
 
                 for _, c in customers_df.iterrows():
-                    if c["Status"] != "Active":
-                        continue
+
+                    # 🚫 Exclude system customer
                     if c["Name"] == "Dairy-CMS":
                         continue
 
-                    # overlap check
+                    # 🚫 Prevent overlapping bills
                     if not bills_df.empty and (
                         (bills_df["CustomerID"] == c["CustomerID"]) &
                         (bills_df["FromDate"] <= pd.to_datetime(to_date)) &
@@ -2510,11 +2510,20 @@ else:
                     ).any():
                         continue
 
-                    morning, evening, total, missing ,daily_pattern= calculate_milk(bitran_df,
-                        c["CustomerID"], from_date, to_date
+                    # 🔍 Calculate delivered milk
+                    morning, evening, total, missing, daily_pattern = calculate_milk(
+                        bitran_df,
+                        c["CustomerID"],
+                        from_date,
+                        to_date
                     )
 
-                    if total == 0 or c["RatePerLitre"] <= 0:
+                    # 🚫 No delivery → no bill
+                    if total <= 0:
+                        continue
+
+                    # 🚫 Rate not defined → skip bulk
+                    if c["RatePerLitre"] <= 0:
                         continue
 
                     amount = round(total * c["RatePerLitre"], 2)
@@ -2526,8 +2535,9 @@ else:
                         "total": total,
                         "amount": amount,
                         "missing": missing,
-                        "daily_pattern":daily_pattern
+                        "daily_pattern": daily_pattern
                     })
+
 
                 if not preview:
                     st.info("No eligible customers for this month.")
