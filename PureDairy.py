@@ -16,7 +16,7 @@ import smtplib
 from email.message import EmailMessage  
 from datetime import datetime, timedelta
 import time
-from streamlit_cookies_manager import EncryptedCookieManager
+
 
 
 
@@ -371,15 +371,6 @@ def logout_user(auto=False):
     st.session_state.user_accesslevel = None
     st.session_state.last_activity = None
 
-    # --- Clear cookies properly ---
-    cookies["authenticated"] = ""
-    cookies["user_id"] = ""
-    cookies["username"] = ""
-    cookies["user_name"] = ""
-    cookies["user_role"] = ""
-    cookies["user_accesslevel"] = ""
-    cookies.save()
-
     if auto:
         st.warning("Session expired due to inactivity")
 
@@ -710,13 +701,7 @@ if not st.session_state.authenticated:
         st.session_state.user_role = row["role"]
         st.session_state.last_activity = time.time()
         st.session_state.user_accesslevel = row["accesslevel"]
-        cookies["authenticated"] = "true"
-        cookies["user_id"] = st.session_state.user_id
-        cookies["username"] = st.session_state.username
-        cookies["user_name"] = st.session_state.user_name
-        cookies["user_role"] = st.session_state.user_role
-        cookies["user_accesslevel"] = st.session_state.user_accesslevel
-        cookies.save()
+
 
 
         st.success(f"✅ Welcome, {row['name']}")
