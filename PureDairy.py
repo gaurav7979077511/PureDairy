@@ -3800,6 +3800,19 @@ else:
             milk_grp["Date"].iloc[0],
             type(milk_grp["Date"].iloc[0])
         )
+        st.write(
+            "Bitran Date sample:",
+            bitran_grp["Date"].iloc[0],
+            "Type:",
+            str(type(bitran_grp["Date"].iloc[0]))
+        )
+        st.write("Bitran Date sample:", bitran_grp["Date"].iloc[0])
+        st.write("Bitran Date type:", type(bitran_grp["Date"].iloc[0]).__name__)
+
+        st.text(f"Bitran Date type: {type(bitran_grp['Date'].iloc[0])}")
+
+
+
 
         st.write(
             "Bitran Date sample + type:",
