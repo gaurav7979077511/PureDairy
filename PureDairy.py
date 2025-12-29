@@ -3753,25 +3753,10 @@ else:
                 df_bitran["MilkDelivered"], errors="coerce"
             ).fillna(0)
 
-            df_bitran["Date"] = (
-                df_bitran["Date"]
-                .astype(str)
-                .str.strip()
-                .replace({"": None, "nan": None, "None": None, "NaT": None})
-            )
+            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"])
 
-            df_bitran["Date"] = pd.to_datetime(
-                df_bitran["Date"],
-                errors="coerce",
-                dayfirst=True
-            ).dt.date
-
-
-
-
-            today = pd.Timestamp.today().date()
+            today = pd.Timestamp.today().normalize()
             month_start = today.replace(day=1)
-
 
             # ---- Lifetime ----
             total_delivered = df_bitran["MilkDelivered"].sum()
@@ -3779,7 +3764,7 @@ else:
             # ---- This month ----
             m_df = df_bitran[df_bitran["Date"] >= month_start]
             month_total = m_df["MilkDelivered"].sum()
-            month_days = m_df["Date"].nunique()
+            month_days = m_df["Date"].dt.date.nunique()
             month_avg = round(month_total / month_days, 2) if month_days else 0
 
             # ---- Last complete day (Morning + Evening both) ----
@@ -3839,12 +3824,6 @@ else:
 
         pending_tasks = []
         df_milk = load_milking_data()
-        df_milk["Date"] = pd.to_datetime(
-            df_milk["Date"],
-            errors="coerce",
-            dayfirst=True
-        ).dt.date
-
 
         # total milking per day + shift
         milk_grp = (
@@ -4124,22 +4103,6 @@ else:
 
         # ===================== SUMMARY CARDS =====================
         df_bitran = load_bitran_data()
-
-        df_bitran["Date"] = (
-            df_bitran["Date"]
-            .astype(str)
-            .str.strip()
-            .replace({"": None, "nan": None, "None": None})
-        )
-
-        df_bitran["Date"] = pd.to_datetime(
-            df_bitran["Date"],
-            errors="coerce",
-            dayfirst=True
-        ).dt.date
-
-
-
         
         if not df_bitran.empty and "MilkDelivered" in df_bitran.columns:
         
