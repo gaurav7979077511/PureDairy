@@ -3834,7 +3834,9 @@ else:
                     shift = task["Shift"]
                     qty = float(task["MilkTotal"])
 
-                    btn_label = f"🧾 {date} • {shift} • {qty:.1f} L"
+                    ui_date = pd.to_datetime(date).strftime("%d/%m/%Y")
+                    btn_label = f"🧾 {ui_date} • {shift} • {qty:.1f} L"
+
 
                     with col:
                         if st.button(btn_label, use_container_width=True):
