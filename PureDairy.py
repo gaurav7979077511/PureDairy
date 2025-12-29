@@ -757,7 +757,7 @@ else:
     if page == "Dashboard":
 
 
-        st.title("📊 Pure Dairy Farm Dashboard")
+        st.title("📊 Vayuvolt Dairy Farm Dashboard")
 
         # ==================================================
         # 🎨 GLOBAL STYLES (READABLE + PROFESSIONAL)
@@ -3692,7 +3692,16 @@ else:
                 df_bitran["MilkDelivered"], errors="coerce"
             ).fillna(0)
 
-            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"])
+            df_bitran["Date"] = pd.to_datetime(
+                df_bitran["Date"],
+                errors="coerce",
+                dayfirst=True
+            )
+            df_bitran = df_bitran.dropna(subset=["Date"])
+            df_bitran["Date"] = df_bitran["Date"].dt.normalize()
+
+
+
 
             today = pd.Timestamp.today().normalize()
             month_start = today.replace(day=1)
