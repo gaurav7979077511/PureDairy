@@ -3772,13 +3772,11 @@ else:
         df_milk["Date"] = pd.to_datetime(
             df_milk["Date"],
             errors="coerce",
-            dayfirst=True
         ).dt.date
 
         df_bitran["Date"] = pd.to_datetime(
             df_bitran["Date"],
             errors="coerce",
-            dayfirst=True
         ).dt.date
 
 
