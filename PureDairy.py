@@ -3813,6 +3813,8 @@ else:
                     "Shift": shift,
                     "MilkTotal": milk_total
                 })
+            
+        st.write("🧪 Pending tasks raw:", pending_tasks)
 
         
         # ===============================
