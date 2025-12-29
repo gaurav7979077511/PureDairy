@@ -3692,10 +3692,16 @@ else:
                 df_bitran["MilkDelivered"], errors="coerce"
             ).fillna(0)
 
-            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"])
+            df_bitran["Date"] = pd.to_datetime(
+                df_bitran["Date"],
+                errors="coerce",
+                dayfirst=True
+            ).dt.date
 
-            today = pd.Timestamp.today().normalize()
+
+            today = dt.date.today()
             month_start = today.replace(day=1)
+
 
             # ---- Lifetime ----
             total_delivered = df_bitran["MilkDelivered"].sum()
@@ -3703,7 +3709,7 @@ else:
             # ---- This month ----
             m_df = df_bitran[df_bitran["Date"] >= month_start]
             month_total = m_df["MilkDelivered"].sum()
-            month_days = m_df["Date"].dt.date.nunique()
+            month_days = m_df["Date"].nunique()
             month_avg = round(month_total / month_days, 2) if month_days else 0
 
             # ---- Last complete day (Morning + Evening both) ----
@@ -3763,6 +3769,12 @@ else:
 
         pending_tasks = []
         df_milk = load_milking_data()
+        df_milk["Date"] = pd.to_datetime(
+            df_milk["Date"],
+            errors="coerce",
+            dayfirst=True
+        ).dt.date
+
 
         # total milking per day + shift
         milk_grp = (
@@ -3834,7 +3846,9 @@ else:
                     shift = task["Shift"]
                     qty = float(task["MilkTotal"])
 
-                    btn_label = f"🧾 {date} • {shift} • {qty:.1f} L"
+                    date_disp = pd.to_datetime(date).strftime("%Y-%m-%d")
+                    btn_label = f"🧾 {date_disp} • {shift} • {qty:.1f} L"
+
 
                     with col:
                         if st.button(btn_label, use_container_width=True):
@@ -3904,7 +3918,10 @@ else:
 
                 ts = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
                 rows = []
+
                 date_str = pd.to_datetime(date).strftime("%Y-%m-%d")
+
+                st.info(f"📅 Saving Bitran for Date: **{date_str}** | Shift: **{shift}**")
 
                 for c, qty in entries:
                     if qty > 0:
@@ -3919,6 +3936,7 @@ else:
 
                 append_bitran_rows(rows)
 
+
                 st.success("✅ Milk Bitran saved successfully")
                 st.cache_data.clear()
                 st.session_state.show_form = None
@@ -3926,119 +3944,6 @@ else:
                 st.session_state.pop("locked_milk_qty", None)
                 st.rerun()
 
-
-        # ==================================================
-        # 👥 STEP-2: ACTIVE CUSTOMERS – DELIVERY SNAPSHOT
-        # ==================================================
-
-        customers_df = load_customers()
-
-        if not customers_df.empty and not df_bitran.empty:
-
-            st.subheader("👥 Active Customers – Delivery Snapshot")
-
-            cards_per_row = 5
-            valid_cards = []
-
-            for _, c in customers_df.iterrows():
-
-                # Filter customer bitran
-                c_df = df_bitran[df_bitran["CustomerID"] == c["CustomerID"]]
-                if c_df.empty:
-                    continue
-
-                # ---- Monthly stats (CURRENT MONTH ONLY) ----
-                m_df = c_df[c_df["Date"] >= month_start]
-                m_total = m_df["MilkDelivered"].sum()
-
-                # 🚫 SKIP if no delivery this month
-                if m_total <= 0:
-                    continue
-
-                m_days = m_df["Date"].dt.date.nunique()
-                m_avg = round(m_total / m_days, 2) if m_days else 0
-
-                # ---- Last complete day ----
-                cd = (
-                    c_df
-                    .groupby(["Date", "Shift"])
-                    .size()
-                    .unstack(fill_value=0)
-                )
-
-                valid_days = cd[
-                    (cd.get("Morning", 0) > 0) | (cd.get("Evening", 0) > 0)
-                ].index
-
-                last_day = valid_days.max() if len(valid_days) else None
-
-                last_day_total = (
-                    c_df[c_df["Date"] == last_day]["MilkDelivered"].sum()
-                    if last_day else 0
-                )
-
-                last_updated = (
-                    c_df["Date"].max().strftime("%d %b")
-                    if not c_df.empty else "-"
-                )
-
-                # ---- Conditional gradient ----
-                gradient = (
-                    "linear-gradient(135deg,#fde68a,#f59e0b)"
-                    if last_day_total < m_avg
-                    else "linear-gradient(135deg,#bbf7d0,#22c55e)"
-                )
-
-                valid_cards.append({
-                    "name": c["Name"],
-                    "month": m_total,
-                    "avg": m_avg,
-                    "last": last_day_total,
-                    "updated": last_updated,
-                    "gradient": gradient
-                })
-
-
-            # ---------------- RENDER IN PROPER ROWS ----------------
-            for i in range(0, len(valid_cards), cards_per_row):
-                row_cards = valid_cards[i:i + cards_per_row]
-                cols = st.columns(cards_per_row)
-
-                for idx, card in enumerate(row_cards):
-                    card_html = f"""
-                    <div style="
-                        background:{card['gradient']};
-                        padding:14px;
-                        border-radius:12px;
-                        font-family:Inter,system-ui,sans-serif;
-                        box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                    ">
-                        <div style="display:flex;justify-content:space-between;">
-                            <div style="font-weight:700;font-size:13px;">
-                                🧑‍🌾 {card['name'].split(' ')[0]}
-                            </div>
-                            <div style="font-size:10px;opacity:.85;">
-                                ⏱ {card['updated']}
-                            </div>
-                        </div>
-
-                        <div style="
-                            display:grid;
-                            grid-template-columns:1fr 1fr;
-                            gap:6px;
-                            margin-top:10px;
-                            font-size:12px;
-                        ">
-                            <div><b>{card['month']:.1f}</b><br>Month</div>
-                            <div><b>{card['avg']:.1f}</b><br>Avg / Day</div>
-                            <div><b>{card['last']:.1f}</b><br>Last Day</div>
-                        </div>
-                    </div>
-                    """
-                    with cols[idx]:
-                        components.html(card_html, height=130)
-
-            st.divider()
 
 
         # ===================== SUMMARY CARDS =====================
