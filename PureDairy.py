@@ -3904,11 +3904,12 @@ else:
 
                 ts = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
                 rows = []
+                date_str = date.strftime("%Y-%m-%d")
 
                 for c, qty in entries:
                     if qty > 0:
                         rows.append([
-                            str(date),
+                            date_str,
                             shift,
                             c["CustomerID"],
                             c["Name"],
