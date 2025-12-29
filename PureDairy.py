@@ -3792,6 +3792,22 @@ else:
             .reset_index()
         )
 
+        st.write("Milk group Date dtype:", milk_grp["Date"].dtype)
+        st.write("Bitran group Date dtype:", bitran_grp["Date"].dtype)
+
+        st.write(
+            "Milk Date sample + type:",
+            milk_grp["Date"].iloc[0],
+            type(milk_grp["Date"].iloc[0])
+        )
+
+        st.write(
+            "Bitran Date sample + type:",
+            bitran_grp["Date"].iloc[0],
+            type(bitran_grp["Date"].iloc[0])
+        )
+
+
         for _, row in milk_grp.iterrows():
             date = row["Date"]
             shift = row["Shift"]
@@ -3813,18 +3829,6 @@ else:
                     "Shift": shift,
                     "MilkTotal": milk_total
                 })
-            st.write(
-                "CHECK →",
-                date,
-                shift,
-                "Milk:",
-                milk_total,
-                "Delivered rows:",
-                delivered.shape[0],
-                "Delivered qty:",
-                delivered["MilkDelivered"].sum() if not delivered.empty else 0
-            )
-
             
         st.write("🧪 Pending tasks raw:", pending_tasks)
 
