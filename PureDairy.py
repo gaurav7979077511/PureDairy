@@ -3686,13 +3686,6 @@ else:
                 ws.append_row(r, value_input_option="USER_ENTERED")
 
         df_bitran = load_bitran_data()
-        if not df_bitran.empty:
-            df_bitran["Date"] = pd.to_datetime(
-                df_bitran["Date"],
-                dayfirst=True,
-                errors="coerce"
-            )
-
 
         if not df_bitran.empty:
             df_bitran["MilkDelivered"] = pd.to_numeric(
@@ -3771,14 +3764,6 @@ else:
         pending_tasks = []
         df_milk = load_milking_data()
 
-        if not df_milk.empty:
-            df_milk["Date"] = pd.to_datetime(
-                df_milk["Date"],
-                dayfirst=True,
-                errors="coerce"
-            ).dt.normalize()
-        
-
         # total milking per day + shift
         milk_grp = (
             df_milk
@@ -3849,9 +3834,7 @@ else:
                     shift = task["Shift"]
                     qty = float(task["MilkTotal"])
 
-                    ui_date = pd.to_datetime(date).strftime("%d/%m/%Y")
-                    btn_label = f"🧾 {ui_date} • {shift} • {qty:.1f} L"
-
+                    btn_label = f"🧾 {date} • {shift} • {qty:.1f} L"
 
                     with col:
                         if st.button(btn_label, use_container_width=True):
@@ -4064,7 +4047,7 @@ else:
         
             df_bitran["MilkDelivered"] = (
                 pd.to_numeric(df_bitran["MilkDelivered"], errors="coerce")
-                .fillna(0).normalize()
+                .fillna(0)
             )
         
             summary = (
