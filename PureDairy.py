@@ -3813,6 +3813,18 @@ else:
                     "Shift": shift,
                     "MilkTotal": milk_total
                 })
+            st.write(
+                "CHECK →",
+                date,
+                shift,
+                "Milk:",
+                milk_total,
+                "Delivered rows:",
+                delivered.shape[0],
+                "Delivered qty:",
+                delivered["MilkDelivered"].sum() if not delivered.empty else 0
+            )
+
             
         st.write("🧪 Pending tasks raw:", pending_tasks)
 
