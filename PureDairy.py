@@ -2956,7 +2956,9 @@ else:
         bills_df["DueDate"] = pd.to_datetime(bills_df["DueDate"])
         bills_df["GeneratedOn"] = pd.to_datetime(bills_df["GeneratedOn"])
 
-        today = pd.Timestamp.today().normalize()
+        today = pd.Timestamp.today().date()
+        month_start = today.replace(day=1)
+
 
         # ---------- Show pending + last 4 months paid ----------
         show_df = bills_df[
@@ -3767,8 +3769,9 @@ else:
 
 
 
-            today = pd.Timestamp.today().normalize()
+            today = pd.Timestamp.today().date()
             month_start = today.replace(day=1)
+
 
             # ---- Lifetime ----
             total_delivered = df_bitran["MilkDelivered"].sum()
