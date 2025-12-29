@@ -780,7 +780,7 @@ else:
     if page == "Dashboard":
 
 
-        st.title("📊 VayuVolt Dairy Farm Dashboard")
+        st.title("📊 Pure Dairy Farm Dashboard")
 
         # ==================================================
         # 🎨 GLOBAL STYLES (READABLE + PROFESSIONAL)
@@ -1039,6 +1039,12 @@ else:
         # ===============================
 
         df_milk = load_milking_data()
+        df_milk["Date"] = pd.to_datetime(
+            df_milk["Date"],
+            errors="coerce",
+            dayfirst=True
+        ).dt.date
+
         pending_milking = []
 
         if not df_milk.empty and {"Date", "Shift"}.issubset(df_milk.columns):
@@ -1144,6 +1150,12 @@ else:
     
         # ================== SUMMARY CARDS ==================
         df_milk = load_milking_data()
+        df_milk["Date"] = pd.to_datetime(
+            df_milk["Date"],
+            errors="coerce",
+            dayfirst=True
+        ).dt.date
+
 
         # ==================================================
         # 📌 MILKING KPIs (MONTH + LAST COMPLETE DAY)
@@ -1243,6 +1255,12 @@ else:
         # ===============================
 
         df_milk = load_milking_data()
+        df_milk["Date"] = pd.to_datetime(
+            df_milk["Date"],
+            errors="coerce",
+            dayfirst=True
+        ).dt.date
+
         pending_milking = []
 
         if not df_milk.empty and {"Date", "Shift"}.issubset(df_milk.columns):
@@ -3744,10 +3762,9 @@ else:
                 df_bitran["Date"],
                 errors="coerce",
                 dayfirst=True
-            )
+            ).dt.date
 
-            # Drop rows with invalid dates
-            df_bitran = df_bitran.dropna(subset=["Date"])
+
 
 
             today = pd.Timestamp.today().normalize()
@@ -3819,6 +3836,12 @@ else:
 
         pending_tasks = []
         df_milk = load_milking_data()
+        df_milk["Date"] = pd.to_datetime(
+            df_milk["Date"],
+            errors="coerce",
+            dayfirst=True
+        ).dt.date
+
 
         # total milking per day + shift
         milk_grp = (
@@ -4110,9 +4133,9 @@ else:
             df_bitran["Date"],
             errors="coerce",
             dayfirst=True
-        )
+        ).dt.date
 
-        df_bitran = df_bitran.dropna(subset=["Date"])
+
 
         
         if not df_bitran.empty and "MilkDelivered" in df_bitran.columns:
