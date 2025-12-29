@@ -2624,7 +2624,7 @@ else:
                 (bitran_df["Date"] <= pd.to_datetime(to_date))
             ]
 
-            df["day"] = df["Date"].dt.date
+            df["day"] = df["Date"]
 
             morning = df[df["Shift"] == "Morning"]["MilkDelivered"].sum()
             evening = df[df["Shift"] == "Evening"]["MilkDelivered"].sum()
@@ -3779,7 +3779,7 @@ else:
             # ---- This month ----
             m_df = df_bitran[df_bitran["Date"] >= month_start]
             month_total = m_df["MilkDelivered"].sum()
-            month_days = m_df["Date"].dt.date.nunique()
+            month_days = m_df["Date"].nunique()
             month_avg = round(month_total / month_days, 2) if month_days else 0
 
             # ---- Last complete day (Morning + Evening both) ----
