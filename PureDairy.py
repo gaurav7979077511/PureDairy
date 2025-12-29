@@ -3692,16 +3692,10 @@ else:
                 df_bitran["MilkDelivered"], errors="coerce"
             ).fillna(0)
 
-            df_bitran["Date"] = pd.to_datetime(
-                df_bitran["Date"],
-                errors="coerce",
-                dayfirst=True
-            ).dt.date
+            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"])
 
-
-            today = dt.date.today()
+            today = pd.Timestamp.today().normalize()
             month_start = today.replace(day=1)
-
 
             # ---- Lifetime ----
             total_delivered = df_bitran["MilkDelivered"].sum()
@@ -3709,7 +3703,7 @@ else:
             # ---- This month ----
             m_df = df_bitran[df_bitran["Date"] >= month_start]
             month_total = m_df["MilkDelivered"].sum()
-            month_days = m_df["Date"].nunique()
+            month_days = m_df["Date"].dt.date.nunique()
             month_avg = round(month_total / month_days, 2) if month_days else 0
 
             # ---- Last complete day (Morning + Evening both) ----
@@ -3769,22 +3763,6 @@ else:
 
         pending_tasks = []
         df_milk = load_milking_data()
-        df_milk["Date"] = pd.to_datetime(
-            df_milk["Date"],
-            errors="coerce",
-        ).dt.date
-
-        df_bitran["Date"] = pd.to_datetime(
-            df_bitran["Date"],
-            errors="coerce",
-        ).dt.date
-
-
-        df_milk["Date"] = pd.to_datetime(df_milk["Date"]).dt.normalize()
-        df_bitran["Date"] = pd.to_datetime(df_bitran["Date"]).dt.normalize()
-
-
-
 
         # total milking per day + shift
         milk_grp = (
@@ -3802,20 +3780,10 @@ else:
             .reset_index()
         )
 
-        st.write("🧪 Milk dates sample:", milk_grp["Date"].unique()[:5])
-
-        st.write("🧪 Milk date type:", type(milk_grp["Date"].iloc[0]))
-
-
         for _, row in milk_grp.iterrows():
             date = row["Date"]
             shift = row["Shift"]
-
-            milk_total = float(row["MilkQuantity"] or 0)
-
-            # 🚫 SKIP if no milk produced
-            if milk_total <= 0:
-                continue
+            milk_total = row["MilkQuantity"]
 
             delivered = bitran_grp[
                 (bitran_grp["Date"] == date) &
@@ -3828,8 +3796,6 @@ else:
                     "Shift": shift,
                     "MilkTotal": milk_total
                 })
-            
-
         
         # ===============================
         # ⏳ PENDING MILK BITRAN (RESPONSIVE)
@@ -3844,27 +3810,15 @@ else:
             for i in range(0, len(pending_tasks), MAX_COLS):
 
                 row_tasks = pending_tasks[i:i + MAX_COLS]
-
-                # 👉 FILTER OUT ZERO / INVALID QUANTITY TASKS
-                row_tasks = [
-                    t for t in row_tasks
-                    if float(t.get("MilkTotal") or 0) > 0
-                ]
-
-                if not row_tasks:
-                    continue  # nothing to show in this row
-
                 cols = st.columns(len(row_tasks))  # dynamic width
 
                 for col, task in zip(cols, row_tasks):
 
                     date = task["Date"]
                     shift = task["Shift"]
-                    qty = float(task["MilkTotal"])
+                    qty = float(task["MilkTotal"] or 0)
 
-                    date_disp = pd.to_datetime(date).strftime("%Y-%m-%d")
-                    btn_label = f"🧾 {date_disp} • {shift} • {qty:.1f} L"
-
+                    btn_label = f"🧾 {date} • {shift} • {qty:.1f} L"
 
                     with col:
                         if st.button(btn_label, use_container_width=True):
@@ -3873,7 +3827,8 @@ else:
                             st.session_state.locked_milk_qty = qty
                             st.rerun()
 
-
+        else:
+            st.info("✅ No pending Milk Bitran")
 
 
         # ===============================
@@ -3904,11 +3859,11 @@ else:
                     qty = st.number_input(
                         f"{c['Name']} ({c['CustomerID']})",
                         min_value=0.0,
-                        step=0.5,
+                        step=0.1,
                         value=None,   # ✅ MUST be numeric
                         key=f"{date}_{shift}_{c['CustomerID']}"
                     )
-                    entries.append((c, qty if qty is not None else 0.0))
+                    entries.append((c, qty))
 
                 save = st.form_submit_button("💾 Save Delivery")
                 cancel = st.form_submit_button("❌ Cancel")
@@ -3923,7 +3878,7 @@ else:
             # ---------- SAVE ----------
             if save:
 
-                total_entered = round(sum(qty for _, qty in entries), 2)
+                total_entered = sum(qty for _, qty in entries)
 
                 if round(total_entered, 2) != round(max_qty, 2):
                     st.error(
@@ -3935,14 +3890,10 @@ else:
                 ts = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
                 rows = []
 
-                date_str = pd.to_datetime(date).strftime("%Y-%m-%d")
-
-                st.info(f"📅 Saving Bitran for Date: **{date_str}** | Shift: **{shift}**")
-
                 for c, qty in entries:
                     if qty > 0:
                         rows.append([
-                            date_str,
+                            str(date),
                             shift,
                             c["CustomerID"],
                             c["Name"],
@@ -3952,9 +3903,7 @@ else:
 
                 append_bitran_rows(rows)
 
-
                 st.success("✅ Milk Bitran saved successfully")
-                st.cache_data.clear()
                 st.session_state.show_form = None
                 st.session_state.pop("locked_bitran_date", None)
                 st.session_state.pop("locked_milk_qty", None)
@@ -3966,6 +3915,9 @@ else:
         # ==================================================
 
         customers_df = load_customers()
+        customers_df = customers_df[
+            customers_df["Status"].str.lower() == "active"
+        ]
 
         if not customers_df.empty and not df_bitran.empty:
 
@@ -3974,56 +3926,35 @@ else:
             cards_per_row = 5
             valid_cards = []
 
+            # ---------------- COLLECT CARD DATA FIRST ----------------
             for _, c in customers_df.iterrows():
 
-                # Filter customer bitran
                 c_df = df_bitran[df_bitran["CustomerID"] == c["CustomerID"]]
                 if c_df.empty:
                     continue
 
-                # ---- Monthly stats (CURRENT MONTH ONLY) ----
+                # ---- Monthly stats ----
                 m_df = c_df[c_df["Date"] >= month_start]
                 m_total = m_df["MilkDelivered"].sum()
-
-                # 🚫 SKIP if no delivery this month
-                if m_total <= 0:
-                    continue
-
-                m_days = m_df["Date"].nunique()
+                m_days = m_df["Date"].dt.date.nunique()
                 m_avg = round(m_total / m_days, 2) if m_days else 0
 
                 # ---- Last complete day ----
-                cd = (
-                    c_df
-                    .groupby(["Date", "Shift"])
-                    .size()
-                    .unstack(fill_value=0)
-                )
-
+                cd = c_df.groupby(["Date", "Shift"]).size().unstack(fill_value=0)
                 valid_days = cd[
                     (cd.get("Morning", 0) > 0) | (cd.get("Evening", 0) > 0)
                 ].index
 
                 last_day = valid_days.max() if len(valid_days) else None
-
                 last_day_total = (
                     c_df[c_df["Date"] == last_day]["MilkDelivered"].sum()
                     if last_day else 0
                 )
 
-                if not c_df.empty:
-                    valid_dates = c_df["Date"].dropna()
-
-                    if not valid_dates.empty:
-                        last_date = max(valid_dates)
-                        last_updated = pd.to_datetime(last_date).strftime("%d %b")
-                    else:
-                        last_updated = "-"
-                else:
-                    last_updated = "-"
-
-
-
+                last_updated = (
+                    c_df["Date"].max().strftime("%d %b")
+                    if not c_df.empty else "-"
+                )
 
                 # ---- Conditional gradient ----
                 gradient = (
@@ -4040,7 +3971,6 @@ else:
                     "updated": last_updated,
                     "gradient": gradient
                 })
-
 
             # ---------------- RENDER IN PROPER ROWS ----------------
             for i in range(0, len(valid_cards), cards_per_row):
