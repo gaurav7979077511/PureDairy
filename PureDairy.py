@@ -757,7 +757,7 @@ else:
     if page == "Dashboard":
 
 
-        st.title("📊 Vayuvolt Dairy Farm Dashboard")
+        st.title("📊 Pure Dairy Farm Dashboard")
 
         # ==================================================
         # 🎨 GLOBAL STYLES (READABLE + PROFESSIONAL)
@@ -3783,7 +3783,12 @@ else:
         for _, row in milk_grp.iterrows():
             date = row["Date"]
             shift = row["Shift"]
-            milk_total = row["MilkQuantity"]
+
+            milk_total = float(row["MilkQuantity"] or 0)
+
+            # 🚫 SKIP if no milk produced
+            if milk_total <= 0:
+                continue
 
             delivered = bitran_grp[
                 (bitran_grp["Date"] == date) &
@@ -3796,6 +3801,7 @@ else:
                     "Shift": shift,
                     "MilkTotal": milk_total
                 })
+
         
         # ===============================
         # ⏳ PENDING MILK BITRAN (RESPONSIVE)
@@ -3810,13 +3816,23 @@ else:
             for i in range(0, len(pending_tasks), MAX_COLS):
 
                 row_tasks = pending_tasks[i:i + MAX_COLS]
+
+                # 👉 FILTER OUT ZERO / INVALID QUANTITY TASKS
+                row_tasks = [
+                    t for t in row_tasks
+                    if float(t.get("MilkTotal") or 0) > 0
+                ]
+
+                if not row_tasks:
+                    continue  # nothing to show in this row
+
                 cols = st.columns(len(row_tasks))  # dynamic width
 
                 for col, task in zip(cols, row_tasks):
 
                     date = task["Date"]
                     shift = task["Shift"]
-                    qty = float(task["MilkTotal"] or 0)
+                    qty = float(task["MilkTotal"])
 
                     btn_label = f"🧾 {date} • {shift} • {qty:.1f} L"
 
@@ -3826,6 +3842,7 @@ else:
                             st.session_state.locked_bitran_date = date
                             st.session_state.locked_milk_qty = qty
                             st.rerun()
+
 
 
 
@@ -3857,11 +3874,11 @@ else:
                     qty = st.number_input(
                         f"{c['Name']} ({c['CustomerID']})",
                         min_value=0.0,
-                        step=0.1,
+                        step=0.5,
                         value=None,   # ✅ MUST be numeric
                         key=f"{date}_{shift}_{c['CustomerID']}"
                     )
-                    entries.append((c, qty))
+                    entries.append((c, qty if qty is not None else 0.0))
 
                 save = st.form_submit_button("💾 Save Delivery")
                 cancel = st.form_submit_button("❌ Cancel")
@@ -3876,7 +3893,7 @@ else:
             # ---------- SAVE ----------
             if save:
 
-                total_entered = sum(qty for _, qty in entries)
+                total_entered = round(sum(qty for _, qty in entries), 2)
 
                 if round(total_entered, 2) != round(max_qty, 2):
                     st.error(
@@ -3902,6 +3919,7 @@ else:
                 append_bitran_rows(rows)
 
                 st.success("✅ Milk Bitran saved successfully")
+                st.cache_data.clear()
                 st.session_state.show_form = None
                 st.session_state.pop("locked_bitran_date", None)
                 st.session_state.pop("locked_milk_qty", None)
@@ -3913,9 +3931,6 @@ else:
         # ==================================================
 
         customers_df = load_customers()
-        customers_df = customers_df[
-            customers_df["Status"].str.lower() == "active"
-        ]
 
         if not customers_df.empty and not df_bitran.empty:
 
@@ -3924,26 +3939,38 @@ else:
             cards_per_row = 5
             valid_cards = []
 
-            # ---------------- COLLECT CARD DATA FIRST ----------------
             for _, c in customers_df.iterrows():
 
+                # Filter customer bitran
                 c_df = df_bitran[df_bitran["CustomerID"] == c["CustomerID"]]
                 if c_df.empty:
                     continue
 
-                # ---- Monthly stats ----
+                # ---- Monthly stats (CURRENT MONTH ONLY) ----
                 m_df = c_df[c_df["Date"] >= month_start]
                 m_total = m_df["MilkDelivered"].sum()
+
+                # 🚫 SKIP if no delivery this month
+                if m_total <= 0:
+                    continue
+
                 m_days = m_df["Date"].dt.date.nunique()
                 m_avg = round(m_total / m_days, 2) if m_days else 0
 
                 # ---- Last complete day ----
-                cd = c_df.groupby(["Date", "Shift"]).size().unstack(fill_value=0)
+                cd = (
+                    c_df
+                    .groupby(["Date", "Shift"])
+                    .size()
+                    .unstack(fill_value=0)
+                )
+
                 valid_days = cd[
                     (cd.get("Morning", 0) > 0) | (cd.get("Evening", 0) > 0)
                 ].index
 
                 last_day = valid_days.max() if len(valid_days) else None
+
                 last_day_total = (
                     c_df[c_df["Date"] == last_day]["MilkDelivered"].sum()
                     if last_day else 0
@@ -3969,6 +3996,7 @@ else:
                     "updated": last_updated,
                     "gradient": gradient
                 })
+
 
             # ---------------- RENDER IN PROPER ROWS ----------------
             for i in range(0, len(valid_cards), cards_per_row):
@@ -4010,6 +4038,63 @@ else:
                         components.html(card_html, height=130)
 
             st.divider()
+
+
+        # ===================== SUMMARY CARDS =====================
+        df_bitran = load_bitran_data()
+        
+        if not df_bitran.empty and "MilkDelivered" in df_bitran.columns:
+        
+            df_bitran["MilkDelivered"] = (
+                pd.to_numeric(df_bitran["MilkDelivered"], errors="coerce")
+                .fillna(0)
+            )
+        
+            summary = (
+                df_bitran
+                .groupby(["Date", "Shift"])["MilkDelivered"]
+                .sum()
+                .reset_index()
+                .sort_values("Date", ascending=False)
+            )
+            summary["MilkDelivered"] = summary["MilkDelivered"].round(2)
+        
+            st.subheader("📊 Daily Summary")
+        
+            cols = st.columns(4)
+        
+            for i, row in summary.iterrows():
+
+                # 🎨 Gradient based on shift
+                if row["Shift"] == "Morning":
+                    gradient = "linear-gradient(135deg,#43cea2,#185a9d)"
+                else:  # Evening
+                    gradient = "linear-gradient(135deg,#7F00FF,#E100FF)"
+            
+                with cols[i % 4]:
+                    st.markdown(
+                        f"""
+                        <div style="
+                            padding:16px;
+                            margin:12px 0;
+                            border-radius:14px;
+                            background:{gradient};
+                            color:white;
+                            box-shadow:0 6px 16px rgba(0,0,0,0.25);
+                        ">
+                            <div style="font-size:13px;opacity:0.9">
+                                {row['Date']}
+                            </div>
+                            <div style="font-size:15px;font-weight:700">
+                                {row['Shift']}
+                            </div>
+                            <div style="font-size:20px;font-weight:800">
+                                {row['MilkDelivered']:.2f} L
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
 
     elif page == "Medicine":
