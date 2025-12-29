@@ -3904,7 +3904,7 @@ else:
 
                 ts = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
                 rows = []
-                date_str = date.strftime("%Y-%m-%d")
+                date_str = pd.to_datetime(date).strftime("%Y-%m-%d")
 
                 for c, qty in entries:
                     if qty > 0:
