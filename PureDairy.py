@@ -3686,6 +3686,13 @@ else:
                 ws.append_row(r, value_input_option="USER_ENTERED")
 
         df_bitran = load_bitran_data()
+        if not df_bitran.empty:
+            df_bitran["Date"] = pd.to_datetime(
+                df_bitran["Date"],
+                dayfirst=True,
+                errors="coerce"
+            )
+
 
         if not df_bitran.empty:
             df_bitran["MilkDelivered"] = pd.to_numeric(
@@ -3763,6 +3770,14 @@ else:
 
         pending_tasks = []
         df_milk = load_milking_data()
+
+        if not df_milk.empty:
+            df_milk["Date"] = pd.to_datetime(
+                df_milk["Date"],
+                dayfirst=True,
+                errors="coerce"
+            )
+        
 
         # total milking per day + shift
         milk_grp = (
