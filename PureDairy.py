@@ -3776,7 +3776,7 @@ else:
                 df_milk["Date"],
                 dayfirst=True,
                 errors="coerce"
-            )
+            ).dt.normalize()
         
 
         # total milking per day + shift
@@ -4064,7 +4064,7 @@ else:
         
             df_bitran["MilkDelivered"] = (
                 pd.to_numeric(df_bitran["MilkDelivered"], errors="coerce")
-                .fillna(0)
+                .fillna(0).normalize()
             )
         
             summary = (
