@@ -37,13 +37,11 @@ defaults = {
     "user_name": None,
     "user_role": None,
     "user_accesslevel": None,
-    "last_activity": None
 }
 
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
-
 
 
 
@@ -371,10 +369,6 @@ def logout_user(auto=False):
     st.session_state.user_accesslevel = None
     st.session_state.last_activity = None
 
-    if auto:
-        st.warning("Session expired due to inactivity")
-
-    st.rerun()
 
 
 def generate_otp():
@@ -703,7 +697,6 @@ if not st.session_state.authenticated:
         st.session_state.user_accesslevel = row["accesslevel"]
 
 
-
         st.success(f"✅ Welcome, {row['name']}")
         st.rerun()
 
@@ -719,10 +712,7 @@ if not st.session_state.authenticated:
 # ============================================================
 else:
     if st.sidebar.button("🚪 Logout"):
-        for k in list(st.session_state.keys()):
-            st.session_state.pop(k)
-        st.query_params.clear()
-        st.rerun()
+        logout_user()
 
 
     st.sidebar.write(f"👤 **Welcome, {st.session_state.user_name}!**")
@@ -790,7 +780,7 @@ else:
     if page == "Dashboard":
 
 
-        st.title("📊 Pure Dairy Farm Dashboard")
+        st.title("📊 VayuVolt Dairy Farm Dashboard")
 
         # ==================================================
         # 🎨 GLOBAL STYLES (READABLE + PROFESSIONAL)
@@ -4146,7 +4136,6 @@ else:
                         """,
                         unsafe_allow_html=True,
                     )
-
 
 
     elif page == "Medicine":
