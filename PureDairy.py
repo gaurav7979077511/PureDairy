@@ -1120,8 +1120,9 @@ else:
             # 📌 Range control
             start_date = df_milk["Date"].min().date()
             today = dt.date.today()
+            yesterday = today - dt.timedelta(days=1)
 
-            all_dates = pd.date_range(start=start_date, end=today, freq="D")
+            all_dates = pd.date_range(start=start_date, end=yesterday, freq="D")
 
             # Group existing data
             day_shift = (
