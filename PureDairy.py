@@ -3774,6 +3774,7 @@ else:
             errors="coerce",
             dayfirst=True
         ).dt.date
+
         df_bitran["Date"] = pd.to_datetime(
             df_bitran["Date"],
             errors="coerce",
@@ -3797,6 +3798,13 @@ else:
             .sum()
             .reset_index()
         )
+
+        st.write("🧪 Milk dates sample:", milk_grp["Date"].unique()[:5])
+        st.write("🧪 Bitran dates sample:", bitran_grp["Date"].unique()[:5])
+
+        st.write("🧪 Milk date type:", type(milk_grp["Date"].iloc[0]))
+        st.write("🧪 Bitran date type:", type(bitran_grp["Date"].iloc[0]))
+
 
         for _, row in milk_grp.iterrows():
             date = row["Date"]
