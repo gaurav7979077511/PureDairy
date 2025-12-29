@@ -14,10 +14,7 @@ import cloudinary.uploader
 import random
 import smtplib
 from email.message import EmailMessage  
-from datetime import datetime, timedelta
-import time
-
-
+from datetime import datetime, timedelta 
 
 
 
@@ -25,25 +22,6 @@ import time
 # PAGE CONFIGURATION
 # ============================================================
 st.set_page_config(page_title="Dairy Farm Management", layout="wide")
-
-
-# ============================================================
-# SESSION STATE DEFAULTS (MUST BE FIRST)
-# ============================================================
-defaults = {
-    "authenticated": False,
-    "user_id": None,
-    "username": None,
-    "user_name": None,
-    "user_role": None,
-    "user_accesslevel": None,
-}
-
-for k, v in defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
-
-
 
 # ============================================================
 # GOOGLE SHEET IDS (from Streamlit Secrets)
@@ -359,18 +337,6 @@ def hash_password(password):
 def verify_password(stored_hash, password):
     return bcrypt.checkpw(password.encode(), stored_hash.encode())
 
-def logout_user(auto=False):
-    # --- Reset auth state safely ---
-    st.session_state.authenticated = False
-    st.session_state.user_id = None
-    st.session_state.username = None
-    st.session_state.user_name = None
-    st.session_state.user_role = None
-    st.session_state.user_accesslevel = None
-    st.session_state.last_activity = None
-
-
-
 def generate_otp():
     return str(random.randint(100000, 999999))
 
@@ -429,13 +395,25 @@ def send_temp_password_email(to_email,name, username, temp_password):
 # ============================================================
 # SESSION STATE INIT
 # ============================================================
-
+defaults = {
+    "authenticated": False,
+    "user_id": None,
+    "username": None,
+    "user_name": None,
+    "user_role": None,
+    "user_accesslevel": None,
+    "otp_sent": False,
+    "otp_verified": False
+}
 if "reset_step" not in st.session_state:
     st.session_state.reset_step = "username"
 
 def get_col_index(df, col_name):
     return df.columns.tolist().index(col_name.lower()) + 1
 
+
+for k, v in defaults.items():
+    st.session_state.setdefault(k, v)
 
 
 def open_bank_sheet():
@@ -550,7 +528,6 @@ forgot_mode = st.query_params.get("forgot", "false") == "true"
 # ============================================================
 # AUTH FLOW
 # ============================================================
-
 if not st.session_state.authenticated:
 
     # =================== FORGOT PASSWORD ===================
@@ -693,9 +670,7 @@ if not st.session_state.authenticated:
         st.session_state.username = row["username"]
         st.session_state.user_name = row["name"]
         st.session_state.user_role = row["role"]
-        st.session_state.last_activity = time.time()
         st.session_state.user_accesslevel = row["accesslevel"]
-
 
         st.success(f"✅ Welcome, {row['name']}")
         st.rerun()
@@ -712,8 +687,10 @@ if not st.session_state.authenticated:
 # ============================================================
 else:
     if st.sidebar.button("🚪 Logout"):
-        logout_user()
-
+        for k in list(st.session_state.keys()):
+            st.session_state.pop(k)
+        st.query_params.clear()
+        st.rerun()
 
     st.sidebar.write(f"👤 **Welcome, {st.session_state.user_name}!**")
     # ============================================================
@@ -780,7 +757,7 @@ else:
     if page == "Dashboard":
 
 
-        st.title("📊 Pure Dairy Farm Dashboard")
+        st.title("📊 Vayuvolt Dairy Farm Dashboard")
 
         # ==================================================
         # 🎨 GLOBAL STYLES (READABLE + PROFESSIONAL)
@@ -1039,27 +1016,13 @@ else:
         # ===============================
 
         df_milk = load_milking_data()
-        df_milk["Date"] = pd.to_datetime(
-            df_milk["Date"],
-            errors="coerce",
-            dayfirst=True
-        ).dt.date
 
         pending_milking = []
 
         if not df_milk.empty and {"Date", "Shift"}.issubset(df_milk.columns):
 
-            # Normalize Date
             df_milk["Date"] = pd.to_datetime(df_milk["Date"], errors="coerce")
 
-            # 📌 Range control
-            start_date = df_milk["Date"].min().date()
-            today = dt.date.today()
-            yesterday = today - dt.timedelta(days=1)
-
-            all_dates = pd.date_range(start=start_date, end=yesterday, freq="D")
-
-            # Group existing data
             day_shift = (
                 df_milk
                 .groupby(["Date", "Shift"])
@@ -1067,21 +1030,11 @@ else:
                 .unstack(fill_value=0)
             )
 
-            # ✅ CRITICAL: convert index to pure date
-            day_shift.index = day_shift.index.date
-
-            # 🔁 Check every date till today
-            for d in all_dates:
-                d = d.date()
-
-                # Morning missing
-                if d not in day_shift.index or day_shift.loc[d].get("Morning", 0) == 0:
-                    pending_milking.append((d, "Morning"))
-
-                # Evening missing
-                if d not in day_shift.index or day_shift.loc[d].get("Evening", 0) == 0:
-                    pending_milking.append((d, "Evening"))
-
+            for date, row in day_shift.iterrows():
+                if row.get("Morning", 0) == 0:
+                    pending_milking.append((date.date(), "Morning"))
+                if row.get("Evening", 0) == 0:
+                    pending_milking.append((date.date(), "Evening"))
 
         # ---- UI (ONLY IF EXISTS) ----
         if pending_milking:
@@ -1150,12 +1103,6 @@ else:
     
         # ================== SUMMARY CARDS ==================
         df_milk = load_milking_data()
-        df_milk["Date"] = pd.to_datetime(
-            df_milk["Date"],
-            errors="coerce",
-            dayfirst=True
-        ).dt.date
-
 
         # ==================================================
         # 📌 MILKING KPIs (MONTH + LAST COMPLETE DAY)
@@ -1255,12 +1202,6 @@ else:
         # ===============================
 
         df_milk = load_milking_data()
-        df_milk["Date"] = pd.to_datetime(
-            df_milk["Date"],
-            errors="coerce",
-            dayfirst=True
-        ).dt.date
-
         pending_milking = []
 
         if not df_milk.empty and {"Date", "Shift"}.issubset(df_milk.columns):
@@ -1713,7 +1654,7 @@ else:
                         [
                             "Feed", "Medicine", "Labour", "Electricity",
                             "Maintenance", "Transport", "Veterinary",
-                            "Equipment","Petrol","Cow_Shelter", "Other"
+                            "Equipment", "Other"
                         ]
                     )
     
@@ -2624,7 +2565,7 @@ else:
                 (bitran_df["Date"] <= pd.to_datetime(to_date))
             ]
 
-            df["day"] = df["Date"]
+            df["day"] = df["Date"].dt.date
 
             morning = df[df["Shift"] == "Morning"]["MilkDelivered"].sum()
             evening = df[df["Shift"] == "Evening"]["MilkDelivered"].sum()
@@ -2956,9 +2897,7 @@ else:
         bills_df["DueDate"] = pd.to_datetime(bills_df["DueDate"])
         bills_df["GeneratedOn"] = pd.to_datetime(bills_df["GeneratedOn"])
 
-        today = pd.Timestamp.today().date()
-        month_start = today.replace(day=1)
-
+        today = pd.Timestamp.today().normalize()
 
         # ---------- Show pending + last 4 months paid ----------
         show_df = bills_df[
