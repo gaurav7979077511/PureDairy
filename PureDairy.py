@@ -3774,6 +3774,12 @@ else:
             errors="coerce",
             dayfirst=True
         ).dt.date
+        df_bitran["Date"] = pd.to_datetime(
+            df_bitran["Date"],
+            errors="coerce",
+            dayfirst=True
+        ).dt.date
+
 
 
         # total milking per day + shift
@@ -3791,35 +3797,6 @@ else:
             .sum()
             .reset_index()
         )
-
-        st.write("Milk group Date dtype:", milk_grp["Date"].dtype)
-        st.write("Bitran group Date dtype:", bitran_grp["Date"].dtype)
-
-        st.write(
-            "Milk Date sample + type:",
-            milk_grp["Date"].iloc[0],
-            type(milk_grp["Date"].iloc[0])
-        )
-        st.write(
-            "Bitran Date sample:",
-            bitran_grp["Date"].iloc[0],
-            "Type:",
-            str(type(bitran_grp["Date"].iloc[0]))
-        )
-        st.write("Bitran Date sample:", bitran_grp["Date"].iloc[0])
-        st.write("Bitran Date type:", type(bitran_grp["Date"].iloc[0]).__name__)
-
-        st.text(f"Bitran Date type: {type(bitran_grp['Date'].iloc[0])}")
-
-
-
-
-        st.write(
-            "Bitran Date sample + type:",
-            bitran_grp["Date"].iloc[0],
-            type(bitran_grp["Date"].iloc[0])
-        )
-
 
         for _, row in milk_grp.iterrows():
             date = row["Date"]
@@ -3843,7 +3820,6 @@ else:
                     "MilkTotal": milk_total
                 })
             
-        st.write("🧪 Pending tasks raw:", pending_tasks)
 
         
         # ===============================
