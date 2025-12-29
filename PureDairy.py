@@ -26,13 +26,6 @@ from streamlit_cookies_manager import EncryptedCookieManager
 # ============================================================
 st.set_page_config(page_title="Dairy Farm Management", layout="wide")
 
-cookies = EncryptedCookieManager(
-    prefix="dairy_app",
-    password=st.secrets["cookie_password"]
-)
-
-if not cookies.ready():
-    st.stop()
 
 # ============================================================
 # SESSION STATE DEFAULTS (MUST BE FIRST)
@@ -50,48 +43,6 @@ defaults = {
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
-
-# ============================================================
-# COOKIE → SESSION RESTORE
-# ============================================================
-def restore_session_from_cookie():
-    if not st.session_state.authenticated and cookies.get("authenticated") == "true":
-        st.session_state.authenticated = True
-        st.session_state.user_id = cookies.get("user_id")
-        st.session_state.username = cookies.get("username")
-        st.session_state.user_name = cookies.get("user_name")
-        st.session_state.user_role = cookies.get("user_role")
-        st.session_state.user_accesslevel = cookies.get("user_accesslevel")
-
-    # FALLBACK: mobile refresh protection
-    elif st.session_state.get("authenticated"):
-        # Session already valid, do nothing
-        pass
-
-
-
-restore_session_from_cookie()
-
-# ============================================================
-# ACTIVITY TRACKING
-# ============================================================
-# ================= ACTIVITY TRACKING =================
-INACTIVITY_LIMIT = 120  # seconds
-
-def auto_logout_check():
-    if not st.session_state.authenticated:
-        return
-
-    last = st.session_state.get("last_activity")
-    if last and (time.time() - last > INACTIVITY_LIMIT):
-        logout_user(auto=True)
-
-# ✅ SET activity ONLY once per session (refresh-safe)
-if st.session_state.authenticated:
-    if st.session_state.last_activity is None:
-        st.session_state.last_activity = time.time()
-
-auto_logout_check()
 
 
 
@@ -783,7 +734,10 @@ if not st.session_state.authenticated:
 # ============================================================
 else:
     if st.sidebar.button("🚪 Logout"):
-        logout_user()
+        for k in list(st.session_state.keys()):
+            st.session_state.pop(k)
+        st.query_params.clear()
+        st.rerun()
 
 
     st.sidebar.write(f"👤 **Welcome, {st.session_state.user_name}!**")
