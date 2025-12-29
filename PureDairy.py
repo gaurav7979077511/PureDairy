@@ -3780,6 +3780,11 @@ else:
         ).dt.date
 
 
+        df_milk["Date"] = pd.to_datetime(df_milk["Date"]).dt.normalize()
+        df_bitran["Date"] = pd.to_datetime(df_bitran["Date"]).dt.normalize()
+
+
+
 
         # total milking per day + shift
         milk_grp = (
@@ -3798,10 +3803,8 @@ else:
         )
 
         st.write("🧪 Milk dates sample:", milk_grp["Date"].unique()[:5])
-        st.write("🧪 Bitran dates sample:", bitran_grp["Date"].unique()[:5])
 
         st.write("🧪 Milk date type:", type(milk_grp["Date"].iloc[0]))
-        st.write("🧪 Bitran date type:", type(bitran_grp["Date"].iloc[0]))
 
 
         for _, row in milk_grp.iterrows():
