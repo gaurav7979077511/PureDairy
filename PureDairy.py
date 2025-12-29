@@ -3733,7 +3733,22 @@ else:
                 df_bitran["MilkDelivered"], errors="coerce"
             ).fillna(0)
 
-            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"])
+            df_bitran["Date"] = (
+                df_bitran["Date"]
+                .astype(str)
+                .str.strip()
+                .replace({"": None, "nan": None, "None": None, "NaT": None})
+            )
+
+            df_bitran["Date"] = pd.to_datetime(
+                df_bitran["Date"],
+                errors="coerce",
+                dayfirst=True
+            )
+
+            # Drop rows with invalid dates
+            df_bitran = df_bitran.dropna(subset=["Date"])
+
 
             today = pd.Timestamp.today().normalize()
             month_start = today.replace(day=1)
@@ -4083,6 +4098,22 @@ else:
 
         # ===================== SUMMARY CARDS =====================
         df_bitran = load_bitran_data()
+
+        df_bitran["Date"] = (
+            df_bitran["Date"]
+            .astype(str)
+            .str.strip()
+            .replace({"": None, "nan": None, "None": None})
+        )
+
+        df_bitran["Date"] = pd.to_datetime(
+            df_bitran["Date"],
+            errors="coerce",
+            dayfirst=True
+        )
+
+        df_bitran = df_bitran.dropna(subset=["Date"])
+
         
         if not df_bitran.empty and "MilkDelivered" in df_bitran.columns:
         
