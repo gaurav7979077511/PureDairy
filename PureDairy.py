@@ -3865,6 +3865,9 @@ else:
                 (customers["Status"].str.lower() == "active") &
                 (customers["Shift"].isin([shift, "Both"]))
             ]
+            if "bitran_saved" not in st.session_state:
+                st.session_state.bitran_saved = False
+
 
             with st.form("locked_bitran_form"):
 
