@@ -6053,6 +6053,85 @@ else:
         st.divider()
 
         # ======================================================
+        # 👑 ADMIN VIEW — ALL USERS WALLET SUMMARY
+        # ======================================================
+        if st.session_state.user_role == "admin":
+
+            st.subheader("👑 All Users Wallet Overview")
+
+            # Exclude admin from list
+            non_admin_df = wallet_df[wallet_df["UserID"] != st.session_state.user_id].copy()
+
+            if non_admin_df.empty:
+                st.info("No wallet data available for other users.")
+            else:
+                cards_per_row = 3
+                users = non_admin_df["UserID"].unique().tolist()
+
+                rows = [
+                    users[i:i + cards_per_row]
+                    for i in range(0, len(users), cards_per_row)
+                ]
+
+                for row_users in rows:
+                    cols = st.columns(len(row_users))
+
+                    for col, uid in zip(cols, row_users):
+                        u_df = non_admin_df[non_admin_df["UserID"] == uid]
+
+                        user_name = u_df["UserName"].iloc[0]
+
+                        credit = u_df[
+                            (u_df["TxnType"] == "CREDIT") &
+                            (u_df["TxnStatus"] == "COMPLETED")
+                        ]["Amount"].sum()
+
+                        debit = u_df[
+                            (u_df["TxnType"] == "DEBIT") &
+                            (u_df["TxnStatus"] == "COMPLETED")
+                        ]["Amount"].sum()
+
+                        blocked = u_df[
+                            (u_df["TxnType"] == "DEBIT") &
+                            (u_df["TxnStatus"] == "PENDING")
+                        ]["Amount"].sum()
+
+                        available = credit - debit - blocked
+
+                        with col:
+                            st.markdown(
+                                f"""
+                                <div style="
+                                    background:linear-gradient(135deg,#6b7280,#374151);
+                                    color:white;
+                                    padding:16px;
+                                    border-radius:16px;
+                                    box-shadow:0 6px 16px rgba(0,0,0,0.25);
+                                    font-family:Inter,system-ui,sans-serif;
+                                ">
+                                    <div style="font-size:14px;font-weight:800;">
+                                        👤 {user_name}
+                                    </div>
+
+                                    <div style="margin-top:10px;font-size:13px;">
+                                        💰 Available: 
+                                        <b>₹ {available:,.2f}</b>
+                                    </div>
+
+                                    {
+                                        f'''
+                                        <div style="margin-top:6px;font-size:12px;opacity:.9;">
+                                            ⛔ Blocked: ₹ {blocked:,.2f}
+                                        </div>
+                                        ''' if blocked > 0 else ""
+                                    }
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+
+        # ======================================================
         # SEND MONEY (INITIATE)
         # ======================================================
         # Create columns (left space + button column)
@@ -6070,6 +6149,7 @@ else:
         users_df = dairy_users_df[
             dairy_users_df["userid"] != st.session_state.user_id
         ]
+    
 
         
 
