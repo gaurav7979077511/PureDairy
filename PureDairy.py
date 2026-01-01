@@ -6055,7 +6055,7 @@ else:
         # ======================================================
         # 👑 ADMIN VIEW — ALL USERS WALLET SUMMARY
         # ======================================================
-        if st.session_state.user_role == "admin":
+        if st.session_state.user_role == "Admin":
 
             st.subheader("👑 All Users Wallet Overview")
 
