@@ -1379,8 +1379,9 @@ else:
                     .mean()
                 )
             else:
-                month_total = {}
-                month_avg = {}
+                month_total = pd.Series(dtype=float)
+                month_avg = pd.Series(dtype=float)
+
 
 
             month_avg = (
