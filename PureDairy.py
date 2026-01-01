@@ -6053,82 +6053,70 @@ else:
         st.divider()
 
         # ======================================================
-        # 👑 ADMIN VIEW — ALL USERS WALLET SUMMARY
+        # 👑 ADMIN – ALL USERS WALLET GLANCE
         # ======================================================
-        if st.session_state.user_role == "Admin":
+        if st.session_state.user_role == "admin":
 
-            st.subheader("👑 All Users Wallet Overview")
+            st.subheader("👥 Users Wallet Overview")
 
-            # Exclude admin from list
-            non_admin_df = wallet_df[wallet_df["UserID"] != st.session_state.user_id].copy()
+            # Ensure numeric conversion
+            wallet_df["Amount"] = pd.to_numeric(wallet_df["Amount"], errors="coerce").fillna(0)
 
-            if non_admin_df.empty:
-                st.info("No wallet data available for other users.")
-            else:
-                cards_per_row = 3
-                users = non_admin_df["UserID"].unique().tolist()
+            users = wallet_df["UserID"].unique()
 
-                rows = [
-                    users[i:i + cards_per_row]
-                    for i in range(0, len(users), cards_per_row)
-                ]
+            cards_per_row = 3
+            rows = [users[i:i+cards_per_row] for i in range(0, len(users), cards_per_row)]
 
-                for row_users in rows:
-                    cols = st.columns(len(row_users))
+            for row in rows:
+                cols = st.columns(len(row))
 
-                    for col, uid in zip(cols, row_users):
-                        u_df = non_admin_df[non_admin_df["UserID"] == uid]
+                for col, uid in zip(cols, row):
 
-                        user_name = u_df["Name"].iloc[0]
+                    u_df = wallet_df[wallet_df["UserID"] == uid]
 
-                        credit = u_df[
-                            (u_df["TxnType"] == "CREDIT") &
-                            (u_df["TxnStatus"] == "COMPLETED")
-                        ]["Amount"].sum()
+                    if u_df.empty:
+                        continue
 
-                        debit = u_df[
-                            (u_df["TxnType"] == "DEBIT") &
-                            (u_df["TxnStatus"] == "COMPLETED")
-                        ]["Amount"].sum()
+                    name = u_df["Name"].iloc[0]
 
-                        blocked = u_df[
-                            (u_df["TxnType"] == "DEBIT") &
-                            (u_df["TxnStatus"] == "PENDING")
-                        ]["Amount"].sum()
+                    credit = u_df[
+                        (u_df["TxnType"] == "CREDIT") &
+                        (u_df["TxnStatus"] == "COMPLETED")
+                    ]["Amount"].sum()
 
-                        available = credit - debit - blocked
+                    debit = u_df[
+                        (u_df["TxnType"] == "DEBIT") &
+                        (u_df["TxnStatus"] == "COMPLETED")
+                    ]["Amount"].sum()
 
-                        with col:
-                            st.markdown(
-                                f"""
-                                <div style="
-                                    background:linear-gradient(135deg,#6b7280,#374151);
-                                    color:white;
-                                    padding:16px;
-                                    border-radius:16px;
-                                    box-shadow:0 6px 16px rgba(0,0,0,0.25);
-                                    font-family:Inter,system-ui,sans-serif;
-                                ">
-                                    <div style="font-size:14px;font-weight:800;">
-                                        👤 {user_name}
-                                    </div>
+                    blocked = u_df[
+                        (u_df["TxnType"] == "DEBIT") &
+                        (u_df["TxnStatus"] == "PENDING")
+                    ]["Amount"].sum()
 
-                                    <div style="margin-top:10px;font-size:13px;">
-                                        💰 Available: 
-                                        <b>₹ {available:,.2f}</b>
-                                    </div>
+                    available = credit - debit - blocked
 
-                                    {
-                                        f'''
-                                        <div style="margin-top:6px;font-size:12px;opacity:.9;">
-                                            ⛔ Blocked: ₹ {blocked:,.2f}
-                                        </div>
-                                        ''' if blocked > 0 else ""
-                                    }
+                    with col:
+                        st.markdown(
+                            f"""
+                            <div style="
+                                padding:14px;
+                                border-radius:14px;
+                                background:linear-gradient(135deg,#6b7280,#374151);
+                                color:white;
+                                font-family:Inter,system-ui,sans-serif;
+                                box-shadow:0 6px 14px rgba(0,0,0,0.25);
+                            ">
+                                <div style="font-size:14px;font-weight:800;">{name}</div>
+                                <div style="margin-top:8px;font-size:13px;">
+                                    💰 Available: ₹ {available:,.2f}
                                 </div>
-                                """,
-                                unsafe_allow_html=True
-                            )
+                                {"<div style='font-size:12px;opacity:.85;'>⛔ Blocked: ₹ " + f"{blocked:,.2f}</div>" if blocked > 0 else ""}
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
 
 
         # ======================================================
