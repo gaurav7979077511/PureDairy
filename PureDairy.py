@@ -1656,7 +1656,7 @@ else:
                         "Category",
                         [
                             "Feed", "Medicine", "Labour", "Electricity",
-                            "Maintenance", "Transport", "Veterinary",
+                            "Petrol", "Transport", "Veterinary",
                             "Equipment","Salary", "Other"
                         ]
                     )
