@@ -6079,7 +6079,7 @@ else:
                     for col, uid in zip(cols, row_users):
                         u_df = non_admin_df[non_admin_df["UserID"] == uid]
 
-                        user_name = u_df["UserName"].iloc[0]
+                        user_name = u_df["Name"].iloc[0]
 
                         credit = u_df[
                             (u_df["TxnType"] == "CREDIT") &
