@@ -6062,7 +6062,11 @@ else:
             # Ensure numeric conversion
             wallet_df["Amount"] = pd.to_numeric(wallet_df["Amount"], errors="coerce").fillna(0)
 
-            users = wallet_df["UserID"].unique()
+            # Exclude admin from list
+            non_admin_df = wallet_df[wallet_df["UserID"] != st.session_state.user_id].copy()
+
+            users = non_admin_df["UserID"].unique()
+
 
             cards_per_row = 3
             rows = [users[i:i+cards_per_row] for i in range(0, len(users), cards_per_row)]
@@ -6072,7 +6076,7 @@ else:
 
                 for col, uid in zip(cols, row):
 
-                    u_df = wallet_df[wallet_df["UserID"] == uid]
+                    u_df = non_admin_df[non_admin_df["UserID"] == uid]
 
                     if u_df.empty:
                         continue
@@ -6116,6 +6120,7 @@ else:
                             """,
                             unsafe_allow_html=True
                         )
+            st.divider()
 
 
 
