@@ -4317,6 +4317,7 @@ else:
         if not df_bitran.empty and "MilkDelivered" in df_bitran.columns:
 
             st.subheader("📊 Daily Summary")
+            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"], errors="coerce")
 
             filter_option = st.radio(
                 "Filter",
@@ -4347,7 +4348,7 @@ else:
                 pd.to_numeric(df_bitran["MilkDelivered"], errors="coerce")
                 .fillna(0)
             )
-            df_bitran["Date"] = pd.to_datetime(df_bitran["Date"], errors="coerce")
+            
 
         
             shift_order = {"Morning": 1, "Evening": 2}
