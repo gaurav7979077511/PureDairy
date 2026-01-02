@@ -1513,14 +1513,27 @@ else:
             df_milk["MilkQuantity"] = pd.to_numeric(
                 df_milk["MilkQuantity"], errors="coerce"
             ).fillna(0)
+
+            df_milk["Date"] = pd.to_datetime(df_milk["Date"], errors="coerce")
+            shift_order = {"Morning": 1, "Evening": 2}
+
     
             summary = (
                 df_milk
                 .groupby(["Date", "Shift"])["MilkQuantity"]
                 .sum()
                 .reset_index()
-                .sort_values("Date", ascending=False)
             )
+
+            summary["ShiftOrder"] = summary["Shift"].map(shift_order)
+
+            summary = summary.sort_values(
+                by=["Date", "ShiftOrder"],
+                ascending=[False, False]   # latest date first, Evening after Morning
+            )
+
+            summary = summary.drop(columns=["ShiftOrder"])
+
     
             st.subheader("📊 Daily Milking Summary")
     
