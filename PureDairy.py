@@ -1512,14 +1512,14 @@ else:
         st.subheader("📊 Daily Milking Summary")
         filter_option = st.radio(
             "Show data for",
-            ["Latest", "1 W", "1 M", "Last 3 M", "All"],
+            ["Last", "1 W", "1 M", "3 M", "All"],
             index=1,  # ✅ default = 1 Week
             horizontal=True
         )
 
         today = pd.Timestamp.today().normalize()
 
-        if filter_option == "Latest":
+        if filter_option == "Last":
             latest_date = df_milk["Date"].max()
             df_milk = df_milk[df_milk["Date"] == latest_date]
 
@@ -1529,7 +1529,7 @@ else:
         elif filter_option == "1 M":
             df_milk = df_milk[df_milk["Date"] >= today - pd.DateOffset(months=1)]
 
-        elif filter_option == "Last 3 M":
+        elif filter_option == "3 M":
             df_milk = df_milk[df_milk["Date"] >= today - pd.DateOffset(months=3)]
 
         # "All" → no filter needed
@@ -4321,20 +4321,20 @@ else:
 
             filter_option = st.radio(
                 "Filter",
-                ["Latest", "1 W", "1 M", "Last 3 M", "All"],
+                ["Last", "1 W", "1 M", "3 M", "All"],
                 horizontal=True,
                 index=1  # default = 1 Week
             )
 
             today = pd.Timestamp.today().normalize()
 
-            if filter_option == "Latest":
+            if filter_option == "Last":
                 start_date = today
             elif filter_option == "1 W":
                 start_date = today - pd.Timedelta(days=7)
             elif filter_option == "1 M":
                 start_date = today - pd.DateOffset(months=1)
-            elif filter_option == "Last 3 M":
+            elif filter_option == "3 M":
                 start_date = today - pd.DateOffset(months=3)
             else:  # All
                 start_date = None
