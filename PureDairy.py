@@ -1512,7 +1512,7 @@ else:
         st.subheader("📊 Daily Milking Summary")
         filter_option = st.radio(
             "Show data for",
-            ["Latest", "1 Week", "1 Month", "Last 3 Months", "All"],
+            ["Latest", "1 W", "1 M", "Last 3 M", "All"],
             index=1,  # ✅ default = 1 Week
             horizontal=True
         )
@@ -1523,13 +1523,13 @@ else:
             latest_date = df_milk["Date"].max()
             df_milk = df_milk[df_milk["Date"] == latest_date]
 
-        elif filter_option == "1 Week":
+        elif filter_option == "1 W":
             df_milk = df_milk[df_milk["Date"] >= today - pd.Timedelta(days=7)]
 
-        elif filter_option == "1 Month":
+        elif filter_option == "1 M":
             df_milk = df_milk[df_milk["Date"] >= today - pd.DateOffset(months=1)]
 
-        elif filter_option == "Last 3 Months":
+        elif filter_option == "Last 3 M":
             df_milk = df_milk[df_milk["Date"] >= today - pd.DateOffset(months=3)]
 
         # "All" → no filter needed
