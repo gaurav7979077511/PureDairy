@@ -1509,6 +1509,32 @@ else:
 
         st.divider()
         #------------- Daily Milk Summary-----------
+        st.subheader("📊 Daily Milking Summary")
+        filter_option = st.radio(
+            "Show data for",
+            ["Latest", "1 Week", "1 Month", "Last 3 Months", "All"],
+            index=1,  # ✅ default = 1 Week
+            horizontal=True
+        )
+
+        today = pd.Timestamp.today().normalize()
+
+        if filter_option == "Latest":
+            latest_date = df_milk["Date"].max()
+            df_milk = df_milk[df_milk["Date"] == latest_date]
+
+        elif filter_option == "1 Week":
+            df_milk = df_milk[df_milk["Date"] >= today - pd.Timedelta(days=7)]
+
+        elif filter_option == "1 Month":
+            df_milk = df_milk[df_milk["Date"] >= today - pd.DateOffset(months=1)]
+
+        elif filter_option == "Last 3 Months":
+            df_milk = df_milk[df_milk["Date"] >= today - pd.DateOffset(months=3)]
+
+        # "All" → no filter needed
+
+
         if not df_milk.empty:
             df_milk["MilkQuantity"] = pd.to_numeric(
                 df_milk["MilkQuantity"], errors="coerce"
@@ -1535,7 +1561,7 @@ else:
             summary = summary.drop(columns=["ShiftOrder"])
 
     
-            st.subheader("📊 Daily Milking Summary")
+            
     
             cols = st.columns(4)
     
