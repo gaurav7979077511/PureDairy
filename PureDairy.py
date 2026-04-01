@@ -5838,7 +5838,7 @@ else:
             "REFUND": "CREDIT",
 
             # DEBIT
-            "BANK_TO_USER_WALLET: "DEBIT",
+            "BANK_TO_USER_WALLET": "DEBIT",
             "CAPITAL_WITHDRAWAL": "DEBIT",
             "PROFIT_WITHDRAWAL": "DEBIT",
             "EXPENSE": "DEBIT",
