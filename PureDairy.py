@@ -1412,15 +1412,20 @@ else:
                 .mean()
             )
             # ---------------- SHOW ONLY COWS WITH MILK THIS MONTH ----------------
+            # ---------------- SHOW ONLY COWS WITH MILK THIS MONTH ----------------
             if not month_df.empty:
                 valid_cows = set(
                     month_total[month_total > 0].index.astype(str)
                 )
             else:
                 valid_cows = set()
-
+            
             # Filter cows based on data, NOT status
             cows_df = cows_df[cows_df["CowID"].isin(valid_cows)]
+            
+            # 🔥 FIX HERE
+            month_total.index = month_total.index.astype(str).str.strip()
+            
             cows_df = cows_df.merge(
                 month_total.rename("MonthMilk"),
                 left_on="CowID",
@@ -2653,6 +2658,34 @@ else:
                 missing_dates,
                 daily_pattern
             )
+        #------
+        def compress_dates(date_list):
+            if not date_list:
+                return ""
+        
+            dates = sorted(set(int(d) for d in date_list))
+        
+            ranges = []
+            start = dates[0]
+            prev = dates[0]
+        
+            for d in dates[1:]:
+                if d == prev + 1:
+                    prev = d
+                else:
+                    if start == prev:
+                        ranges.append(f"{start}")
+                    else:
+                        ranges.append(f"{start} → {prev}")
+                    start = d
+                    prev = d
+        
+            if start == prev:
+                ranges.append(f"{start}")
+            else:
+                ranges.append(f"{start} → {prev}")
+        
+            return ", ".join(ranges)
         def fmt_date(d):
             return pd.to_datetime(d).strftime("%d-%m-%Y")
 
@@ -2819,7 +2852,7 @@ else:
 
                 month = st.selectbox(
                     "Select Month",
-                    pd.date_range(end=today, periods=3, freq="M").strftime("%Y-%m")
+                    pd.date_range(end=today, periods=3, freq="ME").strftime("%Y-%m")
                 )
 
                 y, m = map(int, month.split("-"))
@@ -2903,7 +2936,7 @@ else:
                             c = p["cust"]
                             if not selected.get(c["CustomerID"]):
                                 continue
-                            daily_pattern_str = ",".join(map(str, p["missing"]))
+                            daily_pattern_str = compress_dates(p["missing"])
                             rows_to_add.append([
                                 f"BILL{dt.datetime.now().strftime('%Y%m%d%H%M%S%f')}",
                                 safe(c["CustomerID"]),
@@ -2988,7 +3021,7 @@ else:
                         )
 
 
-                    amount = round(total * rate, 2)
+                    amount = round(total * rate)
                     if amount <= 0:
                         st.error("❌ Bill amount is zero. Please check milk delivery or rate.")
                         st.stop()
@@ -3003,7 +3036,7 @@ else:
 
                     if st.button("✅ Generate Bill"):
                         ws = open_billing_sheet()
-                        daily_pattern_str = ",".join(map(str, missing))
+                        daily_pattern_str = compress_dates(missing)
                         ws.append_row(
                             [
                                 f"BILL{dt.datetime.now().strftime('%Y%m%d%H%M%S%f')}",
@@ -3119,9 +3152,18 @@ else:
                     Pending ₹ {float(r['BalanceAmount']):,.0f}
                 </span>
                 """
-
+            #----
             DailyMilkPattern_html = ""
+
             if "DailyMilkPattern" in r and pd.notna(r["DailyMilkPattern"]) and r["DailyMilkPattern"]:
+                
+                # 👉 Add label before pattern
+                DailyMilkPattern_html += """
+                <div style="font-size:11px;margin-bottom:4px;opacity:0.9;">
+                    ❌ Milk Gap Date:
+                </div>
+                """
+            
                 for d in str(r["DailyMilkPattern"]).split(","):
                     DailyMilkPattern_html += f"""
                     <span style="
@@ -3134,8 +3176,15 @@ else:
                         display:inline-block;
                     ">{d.strip()}</span>
                     """
+            
             else:
-                DailyMilkPattern_html = "<span style='font-size:11px;opacity:.9;'>No daily_pattern</span>"
+                # 👉 Add green tick
+                DailyMilkPattern_html = """
+                <span style="font-size:11px;opacity:.9;">
+                    ✅ Milk Delivered Daily
+                </span>
+                """
+
 
             card_html = f"""
             <div style="
