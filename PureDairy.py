@@ -5833,12 +5833,12 @@ else:
             ]
         CATEGORY_MAP = {
             # CREDIT
-            "USER_WALLET_CREDIT": "CREDIT",
+            "USER_WALLET_TO_BANK": "CREDIT",
             "BANK_INTEREST": "CREDIT",
             "REFUND": "CREDIT",
 
             # DEBIT
-            "USER_WALLET_DEBIT": "DEBIT",
+            "BANK_TO_USER_WALLET: "DEBIT",
             "CAPITAL_WITHDRAWAL": "DEBIT",
             "PROFIT_WITHDRAWAL": "DEBIT",
             "EXPENSE": "DEBIT",
@@ -5978,7 +5978,7 @@ else:
                 ReferenceID=""
                 RelatedEntityType=""
 
-                if category in ["USER_WALLET_CREDIT","USER_WALLET_DEBIT","CAPITAL_WITHDRAWAL","PROFIT_WITHDRAWAL"]:
+                if category in ["USER_WALLET_TO_BANK","BANK_TO_USER_WALLET","CAPITAL_WITHDRAWAL","PROFIT_WITHDRAWAL"]:
                     ReferenceID=f"WTXN{dt.datetime.now().strftime('%Y%m%d%H%M%S%f')}"
                     RelatedEntityType="USER Wallet"
                     if txn_type=="DEBIT":
